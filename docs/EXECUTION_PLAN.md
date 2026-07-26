@@ -51,6 +51,8 @@ Last updated: 2026-07-26
 - MVP wording and scope recorded.
 - Database-backed application shell, login, public opportunity marketplace,
   TED connector, and typed JSON API.
+- Persisted, versioned TED ingestion scheduled every five minutes in production.
+- Source attribution column and documented DACH source expansion strategy.
 - Initial matching domain rules and unit tests.
 
 ## Remaining / external dependencies

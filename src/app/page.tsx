@@ -32,6 +32,14 @@ function formatValue(value: number | null, currency: string | null) {
   }).format(value);
 }
 
+function sourceHost(value: string) {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value;
+  }
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -108,6 +116,13 @@ export default async function Home({
             <button className="primary" type="submit">Search</button>
           </form>
 
+          <div className="marketplace-columns" aria-hidden="true">
+            <span>Opportunity</span>
+            <span>Source</span>
+            <span>Deadline</span>
+            <span>Value</span>
+            <span>Official link</span>
+          </div>
           <div className="live-list">
             {tenders.map((tender) => (
               <article className="live-tender" key={tender.id}>
@@ -116,7 +131,7 @@ export default async function Home({
                   <h3>{tender.title}</h3>
                   <p>{tender.buyerName ?? "Buyer name not supplied"}</p>
                   <small>
-                    {tender.sourceName} · {tender.sourceIdentifier}
+                    Notice {tender.sourceIdentifier}
                     <b> Official source</b>
                   </small>
                   <div className="tags">
@@ -124,8 +139,15 @@ export default async function Home({
                     {tender.cpvCodes.slice(0, 3).map((cpv) => <em key={cpv}>CPV {cpv}</em>)}
                   </div>
                 </div>
+                <div className="live-meta source-column">
+                  <small>SOURCE</small>
+                  <strong>{tender.sourceName}</strong>
+                  <a href={tender.sourceBaseUrl} target="_blank" rel="noreferrer">
+                    {sourceHost(tender.sourceBaseUrl)}
+                  </a>
+                </div>
                 <div className="live-meta"><small>DEADLINE</small><strong>{formatDeadline(tender.deadlineAt)}</strong></div>
-                <div className="live-meta"><small>VALUE</small><strong>{formatValue(tender.estimatedValue, tender.currency)}</strong></div>
+                <div className="live-meta value-column"><small>VALUE</small><strong>{formatValue(tender.estimatedValue, tender.currency)}</strong></div>
                 <a className="save" href={tender.sourceUrl} target="_blank" rel="noreferrer">Official portal <ArrowUpRight size={13} /></a>
               </article>
             ))}
