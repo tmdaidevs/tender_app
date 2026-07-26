@@ -9,12 +9,15 @@ import {
   Fingerprint,
   MapPin,
   Tags,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getTenderById } from "@/lib/tenders";
+import { getLatestTenderEnrichment } from "@/lib/ai/tender-enrichment";
 import { MarketplaceSidebar } from "@/app/components/marketplace-sidebar";
+import { EnrichedTenderBrief } from "@/app/components/enriched-tender-brief";
 
 function formatDate(value: string | null, includeTime = false) {
   if (!value) return "Not supplied by source";
@@ -43,8 +46,12 @@ export default async function OpportunityDetail({
   const user = await requireUser();
   const { id } = await params;
   let tender: Awaited<ReturnType<typeof getTenderById>>;
+  let enrichment: Awaited<ReturnType<typeof getLatestTenderEnrichment>>;
   try {
-    tender = await getTenderById(id);
+    [tender, enrichment] = await Promise.all([
+      getTenderById(id),
+      getLatestTenderEnrichment(id),
+    ]);
   } catch {
     notFound();
   }
@@ -105,7 +112,23 @@ export default async function OpportunityDetail({
           </article>
         </section>
 
-        <div className="detail-grid">
+        {enrichment ? (
+          <EnrichedTenderBrief enrichment={enrichment} />
+        ) : (
+          <section className="ai-pending-card">
+            <span><Sparkles size={19} /></span>
+            <div>
+              <small>AI EVIDENCE ENRICHMENT</small>
+              <h2>Full opportunity brief is queued</h2>
+              <p>
+                The scheduled enrichment worker will read the complete official notice,
+                preserve its source snapshot, and add evidence-backed sections here.
+              </p>
+            </div>
+          </section>
+        )}
+
+        <div className={`detail-grid ${enrichment ? "canonical-detail-grid" : ""}`}>
           <section className="panel detail-section">
             <div className="section-title"><FileText size={18} /><h2>Opportunity description</h2></div>
             <p className="detail-description">

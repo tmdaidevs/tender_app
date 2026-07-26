@@ -19,6 +19,11 @@ source evidence and fields not yet promoted into the normalized model. UI and
 matching logic must use normalized fields; source-specific fields may only be
 used as attributed supplemental evidence.
 
+AI enrichment is deliberately separate from the canonical source record. The
+detail endpoint returns it in the top-level `enrichment` property when a
+completed persisted generation exists. It never replaces official facts in
+`data`; see `AI_TENDER_ENRICHMENT.md`.
+
 Adding a source requires:
 
 1. Zod validation at its external API boundary.

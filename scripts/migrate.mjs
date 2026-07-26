@@ -1,13 +1,8 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { neon } from "@neondatabase/serverless";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is required");
-
-const migration = await readFile(
-  new URL("../database/migrations/0001_neon_foundation.sql", import.meta.url),
-  "utf8",
-);
 
 function splitSqlStatements(source) {
   const statements = [];
@@ -46,7 +41,15 @@ function splitSqlStatements(source) {
 }
 
 const sql = neon(databaseUrl);
-for (const statement of splitSqlStatements(migration)) {
-  await sql.query(statement);
+const migrationDirectory = new URL("../database/migrations/", import.meta.url);
+const migrationFiles = (await readdir(migrationDirectory))
+  .filter((file) => file.endsWith(".sql"))
+  .sort();
+
+for (const migrationFile of migrationFiles) {
+  const migration = await readFile(new URL(migrationFile, migrationDirectory), "utf8");
+  for (const statement of splitSqlStatements(migration)) {
+    await sql.query(statement);
+  }
+  console.log(`Applied ${migrationFile}.`);
 }
-console.log("Applied Neon foundation migration.");
