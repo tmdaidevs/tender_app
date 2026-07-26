@@ -14,6 +14,7 @@
     "db:sync-tenders": "node --env-file=.env.local --import tsx scripts/sync-tenders.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "3.0.0",
     "@neondatabase/serverless": "1.0.2",
     "ai": "6.0.0",
     "class-variance-authority": "^0.7.1",

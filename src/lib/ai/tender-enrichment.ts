@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { openai } from "@ai-sdk/openai";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import {
@@ -8,7 +9,7 @@ import {
 import { getDb } from "@/lib/db";
 
 const PROMPT_VERSION = "tender-enrichment-v1";
-const DEFAULT_MODEL = "openai/gpt-5.6-luna";
+const DEFAULT_MODEL = "gpt-5-mini";
 const MAX_SOURCE_BYTES = 1_500_000;
 let schemaReady: Promise<void> | null = null;
 
@@ -177,7 +178,7 @@ export async function enrichTender(tenderId: string) {
 
   try {
     const result = await generateText({
-      model,
+      model: openai(model),
       output: Output.object({
         name: "tender_enrichment",
         description: "Evidence-backed normalized procurement opportunity brief",

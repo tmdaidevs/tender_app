@@ -12,7 +12,7 @@ trigger model calls.
    `https://ted.europa.eu/en/notice/{publication-number}/xml`.
 4. The source snapshot and SHA-256 hash are stored before generation.
 5. OpenAI produces a Zod-validated, source-neutral opportunity brief through
-   Vercel AI Gateway.
+   OpenAI using a server-only API key.
 6. The result, model, prompt version, token usage, status and error details are
    persisted in `tender_ai_generations`.
 7. The detail API and page read only completed persisted generations.
@@ -32,7 +32,7 @@ time. Identical source hash, prompt version and model combinations are reused.
 
 ## Model configuration
 
-Production uses Vercel OIDC authentication and the AI Gateway model string in
-`AI_ENRICHMENT_MODEL`. The default is `openai/gpt-5.6-luna`, selected for
+Production uses the encrypted server-only `OPENAI_API_KEY` and the OpenAI model
+name in `AI_ENRICHMENT_MODEL`. The default is `gpt-5-mini`, selected for
 high-volume structured extraction. Changing the model creates a new generation
 instead of overwriting prior output.
