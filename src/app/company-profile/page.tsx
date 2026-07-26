@@ -1,11 +1,16 @@
 import { Building2, ShieldCheck } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { emptyCompanyProfile, getCompanyProfile } from "@/lib/company-profile";
+import { emptyCompanyProfile, getCompanyProfile, listCompanyProfiles } from "@/lib/company-profile";
 import { MarketplaceSidebar } from "@/app/components/marketplace-sidebar";
 import { CompanyProfileBuilder } from "@/app/components/company-profile-builder";
 import { CompanyProfileView } from "@/app/components/company-profile-view";
+import { CompanyProfileSelector } from "@/app/components/company-profile-selector";
 
-export default async function CompanyProfilePage() {
+export default async function CompanyProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ profileId?: string }>;
+}) {
   const user = await requireUser();
   if (!user.organizationId) {
     return (
@@ -15,7 +20,13 @@ export default async function CompanyProfilePage() {
       </main>
     );
   }
-  const current = await getCompanyProfile(user.organizationId);
+  const { profileId } = await searchParams;
+  const profiles = await listCompanyProfiles(user.organizationId);
+  const requested = profileId
+    ? await getCompanyProfile(user.organizationId, profileId)
+    : null;
+  const current = requested
+    ?? (profiles[0] ? await getCompanyProfile(user.organizationId, profiles[0].id) : null);
   const profile = current?.profile ?? emptyCompanyProfile;
 
   return (
@@ -29,21 +40,34 @@ export default async function CompanyProfilePage() {
             <span>Build a reusable, evidence-backed profile for matching and bid preparation.</span>
           </div>
           {current && (
-            <div className="profile-status">
-              <ShieldCheck size={16} />
-              <div><small>{current.status.toUpperCase()}</small><strong>{current.completionPercent}% complete</strong></div>
+            <div className="profile-header-actions">
+              <CompanyProfileSelector
+                profiles={profiles.map(({ id, name, isSample, completionPercent }) => ({
+                  id, name, isSample, completionPercent,
+                }))}
+                selectedId={current.id}
+              />
+              <div className="profile-status">
+                <ShieldCheck size={16} />
+                <div><small>{current.isSample ? "SAMPLE" : current.status.toUpperCase()}</small><strong>{current.completionPercent}% complete</strong></div>
+              </div>
             </div>
           )}
         </header>
 
+        {current?.isSample && (
+          <div className="sample-profile-warning">
+            This is fictional sample data. Do not select it for a real bid or treat it as company evidence.
+          </div>
+        )}
         {current && <CompanyProfileView profile={profile} completion={current.completionPercent} />}
 
         <div className="profile-builder-intro">
-          <small>{current ? "UPDATE PROFILE" : "GET STARTED"}</small>
-          <h2>{current ? "Add or improve company evidence" : "How would you like to create the profile?"}</h2>
-          <p>Choose guided entry or let AI prepare a draft from trusted company sources.</p>
+          <small>ADD ANOTHER PROFILE</small>
+          <h2>{current ? "Create a profile for another bid strategy" : "How would you like to create the profile?"}</h2>
+          <p>Create manually, build from evidence with AI, or explore a fictional sample.</p>
         </div>
-        <CompanyProfileBuilder initialProfile={profile} />
+        <CompanyProfileBuilder initialProfile={emptyCompanyProfile} />
       </section>
     </main>
   );

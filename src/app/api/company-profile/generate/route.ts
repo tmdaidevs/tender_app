@@ -5,6 +5,7 @@ import { generateCompanyProfile } from "@/lib/ai/company-profile";
 export const maxDuration = 300;
 
 const websiteListSchema = z.array(z.string().url()).max(3);
+const profileNameSchema = z.string().trim().min(1).max(120);
 
 function canEdit(role: string | null, platformRole: string | null) {
   return platformRole === "platform_admin"
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
   }
   try {
     const formData = await request.formData();
+    const profileName = profileNameSchema.parse(formData.get("profileName"));
     const websitesValue = formData.get("websites");
     const websites = websiteListSchema.parse(
       typeof websitesValue === "string" ? JSON.parse(websitesValue) : [],
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
       organizationId: user.organizationId,
       userId: user.id,
       organizationName: user.organizationName,
+      profileName,
       websiteUrls: websites,
       pdfs,
     });

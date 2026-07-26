@@ -120,6 +120,89 @@ export const emptyCompanyProfile: CompanyProfile = {
   evidenceSummary: [],
 };
 
+export const sampleCompanyProfile: CompanyProfile = {
+  identity: {
+    legalName: "Example Digital Services GmbH",
+    tradingName: "Example Digital",
+    legalForm: "Gesellschaft mit beschränkter Haftung (GmbH)",
+    registrationNumber: "SAMPLE-HRB-00000",
+    vatId: "SAMPLE-DE000000000",
+    registrationCountry: "DE",
+    registeredAddress: "Sample address — replace before use",
+    website: "https://example.com",
+    foundingYear: 2018,
+    employeeCount: 45,
+    companyDescription: "Fictional DACH digital-services supplier profile for exploring TenderLoop. Replace every sample value with verified company evidence before bidding.",
+  },
+  contacts: [{
+    name: "Sample Bid Contact",
+    role: "Bid Manager",
+    email: "bids@example.com",
+    phone: null,
+    authorizedSignatory: false,
+  }],
+  capabilities: {
+    services: ["Custom software development", "Cloud consulting", "Data and AI services"],
+    industries: ["Public sector", "Professional services"],
+    technologies: ["TypeScript", "React", "PostgreSQL", "Cloud platforms"],
+    cpvCodes: ["72000000", "72200000", "72300000"],
+    deliveryCountries: ["DE", "AT", "CH"],
+    deliveryModels: ["Remote", "Hybrid", "On-site"],
+  },
+  procurementReadiness: {
+    electronicSubmissionReady: true,
+    platforms: ["eVergabe-Online (sample)"],
+    euLoginAvailable: false,
+    participantIdentificationCode: null,
+    qualifiedElectronicSignature: false,
+    supportedFormats: ["PDF/A", "DOCX", "XLSX", "ZIP"],
+    tenderLanguages: ["DEU", "ENG"],
+    defaultTenderValidityDays: 68,
+    internalApprovalLeadDays: 5,
+    multipleOffersSupported: true,
+    consortiumParticipation: true,
+  },
+  eligibility: {
+    exclusionGroundsClear: null,
+    taxCompliance: null,
+    socialSecurityCompliance: null,
+    professionalRegistrations: [],
+    licenses: [],
+  },
+  certifications: [{
+    name: "ISO 27001 (sample only)",
+    issuer: "Sample issuer",
+    certificateNumber: "SAMPLE-CERT-001",
+    validUntil: null,
+  }],
+  financial: {
+    currencies: ["EUR", "CHF"],
+    professionalIndemnity: "Sample value — verify before use",
+    publicLiability: "Sample value — verify before use",
+    minimumContractValue: "EUR 25,000",
+    maximumContractValue: "EUR 250,000",
+  },
+  team: [{
+    role: "Software delivery team",
+    skills: ["Solution architecture", "Software engineering", "Delivery management"],
+    languages: ["DEU", "ENG"],
+    certifications: [],
+  }],
+  references: [{
+    client: "Sample public-sector client",
+    project: "Sample digital-service delivery",
+    description: "Fictional reference illustrating the profile format.",
+    services: ["Software development", "Cloud consulting"],
+    outcome: "Sample outcome — replace with an approved reference.",
+    permissionToDisclose: false,
+  }],
+  evidenceSummary: [{
+    claim: "All values in this profile are fictional examples.",
+    sourceLabel: "TenderLoop sample profile",
+    confidence: "low",
+  }],
+};
+
 export function companyProfileCompletion(profile: CompanyProfile) {
   const checks = [
     profile.identity.legalName, profile.identity.registrationCountry,

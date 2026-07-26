@@ -22,12 +22,14 @@ export async function generateCompanyProfile({
   organizationId,
   userId,
   organizationName,
+  profileName,
   websiteUrls,
   pdfs,
 }: {
   organizationId: string;
   userId: string;
   organizationName: string;
+  profileName: string;
   websiteUrls: string[];
   pdfs: ProfilePdf[];
 }) {
@@ -35,6 +37,14 @@ export async function generateCompanyProfile({
   const websites = await Promise.all(websiteUrls.map(fetchPublicWebsite));
   const sql = getDb();
   const sourceIds: string[] = [];
+  const draft = await saveCompanyProfile({
+    organizationId,
+    userId,
+    name: profileName,
+    profile: emptyCompanyProfile,
+    generatedByAi: true,
+  });
+  const profileId = draft.id;
 
   for (const website of websites) {
     const rows = await sql`
@@ -60,16 +70,6 @@ export async function generateCompanyProfile({
     sourceIds.push(String(rows[0].id));
   }
 
-  const profileRows = await sql`
-    insert into company_profiles (organization_id, status, profile, completion_percent, generated_by_ai)
-    values (
-      ${organizationId}, 'draft',
-      ${JSON.stringify(emptyCompanyProfile)}::jsonb, 0, true
-    )
-    on conflict (organization_id) do update set status = 'draft', generated_by_ai = true, updated_at = now()
-    returning id
-  `;
-  const profileId = String(profileRows[0].id);
   const model = process.env.COMPANY_PROFILE_AI_MODEL ?? DEFAULT_MODEL;
   const sourceArray = `{${sourceIds.join(",")}}`;
   const generationRows = await sql`
@@ -122,6 +122,8 @@ export async function generateCompanyProfile({
     const saved = await saveCompanyProfile({
       organizationId,
       userId,
+      name: profileName,
+      profileId,
       profile: result.output,
       generatedByAi: true,
     });

@@ -9,6 +9,7 @@ import {
   FileText,
   Globe2,
   LoaderCircle,
+  TestTube2,
   Sparkles,
   UploadCloud,
 } from "lucide-react";
@@ -25,6 +26,7 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState(initialProfile);
   const [websites, setWebsites] = useState(initialProfile.identity.website ?? "");
+  const [profileName, setProfileName] = useState("");
   const [status, setStatus] = useState<"idle" | "working" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -33,7 +35,7 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
     const response = await fetch("/api/company-profile", {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(profile),
+      body: JSON.stringify({ name: profileName, profile }),
     });
     const body = await response.json();
     if (!response.ok) {
@@ -43,7 +45,7 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
     }
     setStatus("success");
     setMessage("Draft profile saved.");
-    window.location.reload();
+    window.location.assign(`/company-profile?profileId=${body.data.id}`);
   }
 
   async function generateWithAi(event: React.FormEvent<HTMLFormElement>) {
@@ -51,6 +53,7 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
     setStatus("working");
     setMessage("Reading your sources and building an evidence-backed draft…");
     const form = new FormData(event.currentTarget);
+    form.set("profileName", profileName);
     const websiteList = websites
       .split(/[\n,]/)
       .map((value) => value.trim())
@@ -65,7 +68,20 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
     }
     setStatus("success");
     setMessage("AI draft created. Reloading the company profile…");
-    window.location.reload();
+    window.location.assign(`/company-profile?profileId=${body.data.id}`);
+  }
+
+  async function generateSample() {
+    setStatus("working");
+    setMessage("Creating a clearly labeled fictional sample profile…");
+    const response = await fetch("/api/company-profile/sample", { method: "POST" });
+    const body = await response.json();
+    if (!response.ok) {
+      setStatus("error");
+      setMessage(body.error ?? "Sample profile could not be created");
+      return;
+    }
+    window.location.assign(`/company-profile?profileId=${body.data.id}`);
   }
 
   if (mode === "choose") {
@@ -89,6 +105,16 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
           </div>
           <ArrowRight size={18} />
         </button>
+        <button className="profile-path sample-path" onClick={generateSample} disabled={status === "working"}>
+          <span>{status === "working" ? <LoaderCircle className="spin" size={22} /> : <TestTube2 size={22} />}</span>
+          <div>
+            <small>EXPLORE THE FORMAT</small>
+            <h2>Generate Sample Profile</h2>
+            <p>Create a fictional, clearly labeled example you can inspect without using it as bid evidence.</p>
+          </div>
+          <ArrowRight size={18} />
+        </button>
+        {message && <p className={`builder-message profile-start-message ${status}`}>{message}</p>}
       </section>
     );
   }
@@ -106,6 +132,16 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
           </div>
         </div>
         <form className="ai-source-form" onSubmit={generateWithAi}>
+          <label className="website-input">
+            <span>Profile name</span>
+            <input
+              required
+              maxLength={120}
+              value={profileName}
+              onChange={(event) => setProfileName(event.target.value)}
+              placeholder="e.g. DACH Cloud & Data Profile"
+            />
+          </label>
           <label className="website-input">
             <span><Globe2 size={18} /> Official company websites</span>
             <textarea
@@ -151,6 +187,7 @@ export function CompanyProfileBuilder({ initialProfile }: { initialProfile: Comp
           <>
             <div className="builder-heading compact-heading"><div><small>STEP 1</small><h2>Company identity</h2><p>Enter the legal facts suppliers commonly reuse in tenders.</p></div></div>
             <div className="profile-form-grid">
+              <label className="span-two">Profile name<input required maxLength={120} value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="e.g. Public Sector Software Profile" /></label>
               <label>Legal company name<input value={profile.identity.legalName ?? ""} onChange={(e) => setProfile({ ...profile, identity: { ...profile.identity, legalName: e.target.value || null } })} /></label>
               <label>Legal form<input value={profile.identity.legalForm ?? ""} onChange={(e) => setProfile({ ...profile, identity: { ...profile.identity, legalForm: e.target.value || null } })} /></label>
               <label>Registration number<input value={profile.identity.registrationNumber ?? ""} onChange={(e) => setProfile({ ...profile, identity: { ...profile.identity, registrationNumber: e.target.value || null } })} /></label>

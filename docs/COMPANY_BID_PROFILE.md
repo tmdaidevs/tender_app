@@ -4,6 +4,11 @@ The Company Bid Profile is an organization-owned supplier record used for
 matching and bid preparation. It does not submit data to a procurement portal
 and it does not make eligibility or award decisions.
 
+An organization may keep multiple named profiles for different service lines
+or bid strategies. The selected profile is represented by its stable profile
+ID, so future bid creation can reference the exact chosen profile rather than
+an organization-wide mutable default.
+
 ## Creation paths
 
 - Guided setup collects legal identity, capabilities, CPV codes, delivery
@@ -11,6 +16,8 @@ and it does not make eligibility or award decisions.
 - AI-assisted setup accepts up to three public official website pages and five
   PDF documents (up to 4 MB combined). It creates a draft from those sources and leaves unsupported
   fields empty.
+- Sample setup creates a persistently marked fictional profile. Sample records
+  are for exploring the format and must not be treated as evidence.
 
 Website fetching rejects local and private network targets. PDFs are checked
 for media type, size, and the PDF file signature. Source snapshots and hashes
