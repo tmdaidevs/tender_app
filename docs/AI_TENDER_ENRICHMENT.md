@@ -12,7 +12,8 @@ trigger model calls.
    `https://ted.europa.eu/en/notice/{publication-number}/xml`.
 4. The source snapshot and SHA-256 hash are stored before generation.
 5. OpenAI produces a Zod-validated, source-neutral opportunity brief through
-   OpenAI using a server-only API key.
+   OpenAI using a server-only API key. Explicit requirements are additionally
+   normalized as review candidates.
 6. The result, model, prompt version, token usage, status and error details are
    persisted in `tender_ai_generations`.
 7. The detail API and page read only completed persisted generations.
@@ -28,6 +29,8 @@ time. Identical source hash, prompt version and model combinations are reused.
 - Extracted facts carry the relevant XML element path.
 - Risks distinguish source facts, missing information and inference.
 - AI output is a navigation aid, not procurement evidence or an award decision.
+- AI requirement candidates cannot claim `official` or `buyer_confirmed`
+  verification; the schema fixes them to `candidate`.
 - The original official notice remains the controlling source.
 
 ## Model configuration

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { aiRequirementCandidateSchema } from "./tender-requirement";
 
 const supportedFact = z.object({
   text: z.string().min(1).max(1200),
@@ -12,6 +13,7 @@ export const tenderEnrichmentSchema = z.object({
   deliverables: z.array(supportedFact).max(20),
   eligibilityRequirements: z.array(supportedFact).max(20),
   submissionRequirements: z.array(supportedFact).max(20),
+  requirementCandidates: z.array(aiRequirementCandidateSchema).max(100).default([]),
   procedure: z.object({
     procedureType: z.string().max(300).nullable(),
     contractNature: z.string().max(300).nullable(),

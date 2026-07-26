@@ -39,6 +39,7 @@ describe("canonicalTenderSchema", () => {
 
     expect(parsed.schemaVersion).toBe("1.0");
     expect(parsed.source.record["publication-number"]).toBe("123456-2026");
+    expect(parsed.requirements).toEqual([]);
   });
 
   it("rejects incomplete connector output", () => {

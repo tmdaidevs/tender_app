@@ -3,6 +3,7 @@ import {
   canonicalTenderSchema,
   type CanonicalTender,
 } from "@/domain/canonical-tender";
+import { normalizeOfficialTenderConstraints } from "@/domain/tender-requirement";
 import { getDb } from "./db";
 
 export const tenderListInputSchema = z.object({
@@ -227,6 +228,11 @@ export async function getTenderById(id: string): Promise<CanonicalTender | null>
       : {};
   const amount = row.estimated_value === null ? null : Number(row.estimated_value);
   const currency = row.currency ? String(row.currency) : null;
+  const countryCodes = Array.isArray(row.country_codes) ? row.country_codes.map(String) : [];
+  const cpvCodes = Array.isArray(row.cpv_codes) ? row.cpv_codes.map(String) : [];
+  const deadlineAt = row.deadline_at
+    ? new Date(String(row.deadline_at)).toISOString()
+    : null;
 
   return canonicalTenderSchema.parse({
     schemaVersion: "1.0",
@@ -238,11 +244,17 @@ export async function getTenderById(id: string): Promise<CanonicalTender | null>
     lane: String(row.lane),
     buyer: { name: row.buyer_name ? String(row.buyer_name) : null },
     classifications: {
-      cpvCodes: Array.isArray(row.cpv_codes) ? row.cpv_codes.map(String) : [],
+      cpvCodes,
     },
-    placesOfPerformance: (
-      Array.isArray(row.country_codes) ? row.country_codes : []
-    ).map((countryCode) => ({ countryCode: String(countryCode) })),
+    placesOfPerformance: countryCodes.map((countryCode) => ({ countryCode })),
+    requirements: normalizeOfficialTenderConstraints({
+      sourceUrl: String(row.source_url),
+      cpvCodes,
+      countryCodes,
+      estimatedValue: amount,
+      currency,
+      deadlineAt,
+    }),
     value:
       amount !== null && currency !== null
         ? { amount, currency }
@@ -251,9 +263,7 @@ export async function getTenderById(id: string): Promise<CanonicalTender | null>
       publishedAt: row.published_at
         ? new Date(String(row.published_at)).toISOString()
         : null,
-      deadlineAt: row.deadline_at
-        ? new Date(String(row.deadline_at)).toISOString()
-        : null,
+      deadlineAt,
       retrievedAt: new Date(String(row.retrieved_at)).toISOString(),
       updatedAt: new Date(String(row.updated_at)).toISOString(),
     },
