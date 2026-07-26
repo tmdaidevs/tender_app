@@ -5,8 +5,10 @@ import {
   FileCheck2,
   Globe2,
   Languages,
+  Landmark,
   Send,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { MessageResponse } from "@/components/ai-elements/message";
 import type { CompanyProfile } from "@/domain/company-profile";
@@ -92,6 +94,32 @@ export function CompanyProfileView({
           <div className="profile-section-title"><Globe2 size={18} /><div><small>DELIVERY</small><h3>Coverage</h3></div></div>
           <Chips values={profile.capabilities.deliveryCountries} />
           <Chips values={profile.capabilities.deliveryModels} />
+        </section>
+        <section className="profile-section panel">
+          <div className="profile-section-title"><Landmark size={18} /><div><small>COMMERCIAL</small><h3>Capacity & value range</h3></div></div>
+          <dl>
+            <div><dt>Minimum value</dt><dd>{profile.financial.contractValueRange.minimum.amount !== null ? `${profile.financial.contractValueRange.minimum.amount.toLocaleString()} ${profile.financial.contractValueRange.minimum.currency ?? ""}` : "—"}</dd></div>
+            <div><dt>Maximum value</dt><dd>{profile.financial.contractValueRange.maximum.amount !== null ? `${profile.financial.contractValueRange.maximum.amount.toLocaleString()} ${profile.financial.contractValueRange.maximum.currency ?? ""}` : "—"}</dd></div>
+            <div><dt>Available FTE</dt><dd>{profile.capacity.totalAvailableFte ?? "—"}</dd></div>
+            <div><dt>Mobilization</dt><dd>{profile.capacity.typicalMobilizationDays !== null ? `${profile.capacity.typicalMobilizationDays} days` : "—"}</dd></div>
+          </dl>
+        </section>
+        <section className="profile-section panel">
+          <div className="profile-section-title"><Users size={18} /><div><small>EXPERIENCE</small><h3>Team & references</h3></div></div>
+          <Chips values={profile.team.map((item) => `${item.role}${item.headcount !== null ? ` · ${item.headcount}` : ""}`)} />
+          <dl>
+            <div><dt>Comparable projects</dt><dd>{profile.references.length}</dd></div>
+            <div><dt>Documented evidence</dt><dd>{profile.evidence.length}</dd></div>
+          </dl>
+        </section>
+        <section className="profile-section panel">
+          <div className="profile-section-title"><ShieldCheck size={18} /><div><small>COMPLIANCE</small><h3>Security & eligibility</h3></div></div>
+          <Chips values={profile.securityAndCompliance.securityClearances} />
+          <Chips values={profile.securityAndCompliance.accessibilityStandards} />
+          <dl>
+            <div><dt>GDPR readiness</dt><dd>{profile.securityAndCompliance.gdprReady === null ? "Not documented" : profile.securityAndCompliance.gdprReady ? "Confirmed" : "Not satisfied"}</dd></div>
+            <div><dt>Tax compliance</dt><dd>{profile.eligibility.taxCompliance === null ? "Not documented" : profile.eligibility.taxCompliance ? "Confirmed" : "Not satisfied"}</dd></div>
+          </dl>
         </section>
       </div>
     </section>
