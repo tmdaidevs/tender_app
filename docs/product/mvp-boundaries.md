@@ -22,3 +22,7 @@ competitor-derived price recommendations.
 
 North-star metric: percentage of native private tenders receiving at least
 three qualified bids within seven days.
+
+The implemented public-marketplace slice uses live TED data only. It does not
+fall back to sample or fictional tender records when the source or database is
+unavailable.

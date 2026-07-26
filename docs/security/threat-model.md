@@ -13,3 +13,8 @@ deadline checks, private storage with short-lived signed URLs, MIME/magic-byte
 validation, malware quarantine, allowlisted network egress, scoped retrieval,
 schema-validated AI output, append-only audit events, rate limits, and explicit
 human confirmation for publication and awards.
+
+The current login implementation stores scrypt password hashes and only hashed
+opaque session tokens. Cookies are HTTP-only, SameSite=Lax, and Secure in
+production. The one-time bootstrap endpoint is unavailable unless a temporary
+Vercel secret is configured; that secret must be removed after provisioning.
