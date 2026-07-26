@@ -14,7 +14,7 @@ export function MarketplaceSidebar({
   active = "marketplace",
 }: {
   user: SessionUser;
-  active?: "marketplace" | "detail";
+  active?: "marketplace" | "detail" | "company-profile";
 }) {
   return (
     <aside className="sidebar">
@@ -36,7 +36,9 @@ export function MarketplaceSidebar({
         </Link>
         <p>WORKSPACE</p>
         <span className="nav-link disabled"><FileText size={18} /> Private tenders</span>
-        <span className="nav-link disabled"><Building2 size={18} /> Company profile</span>
+        <Link className={`nav-link ${active === "company-profile" ? "active" : ""}`} href="/company-profile">
+          <Building2 size={18} /> Company profile
+        </Link>
       </nav>
       <div className="profile-progress">
         <span><ShieldCheck size={17} /> Authenticated <strong>Neon</strong></span>
