@@ -20,6 +20,8 @@ export function ensureCompanyProfileSchema() {
         create table if not exists company_profiles (
           id uuid primary key default gen_random_uuid(),
           organization_id uuid not null unique references organizations(id) on delete cascade,
+          name text not null default 'Company Profile',
+          is_sample boolean not null default false,
           status text not null default 'draft' check (status in ('draft', 'active')),
           profile jsonb not null default '{}'::jsonb,
           completion_percent integer not null default 0 check (completion_percent between 0 and 100),
@@ -30,6 +32,11 @@ export function ensureCompanyProfileSchema() {
           updated_at timestamptz not null default now()
         )
       `);
+      await sql.query(`alter table company_profiles drop constraint if exists company_profiles_organization_id_key`);
+      await sql.query(`alter table company_profiles add column if not exists name text not null default 'Company Profile'`);
+      await sql.query(`alter table company_profiles add column if not exists is_sample boolean not null default false`);
+      await sql.query(`create unique index if not exists company_profiles_org_name_unique_idx on company_profiles(organization_id, lower(name))`);
+      await sql.query(`create index if not exists company_profiles_org_updated_idx on company_profiles(organization_id, updated_at desc)`);
       await sql.query(`
         create table if not exists company_profile_sources (
           id uuid primary key default gen_random_uuid(),
@@ -65,58 +72,100 @@ export function ensureCompanyProfileSchema() {
   return companyProfileSchemaReady;
 }
 
-export async function getCompanyProfile(organizationId: string) {
-  await ensureCompanyProfileSchema();
-  const rows = await getDb()`
-    select id, status, profile, completion_percent, generated_by_ai, approved_at, updated_at
-    from company_profiles where organization_id = ${organizationId} limit 1
-  `;
-  const row = rows[0];
-  if (!row) return null;
+function mapProfileRow(row: Record<string, unknown>) {
   const parsedProfile = companyProfileSchema.safeParse(row.profile);
-
   return {
     id: String(row.id),
+    name: String(row.name),
     status: String(row.status),
     profile: parsedProfile.success ? parsedProfile.data : emptyCompanyProfile,
     completionPercent: Number(row.completion_percent),
     generatedByAi: Boolean(row.generated_by_ai),
+    isSample: Boolean(row.is_sample),
     approvedAt: row.approved_at ? new Date(String(row.approved_at)).toISOString() : null,
     updatedAt: new Date(String(row.updated_at)).toISOString(),
   };
 }
 
+export async function listCompanyProfiles(organizationId: string) {
+  await ensureCompanyProfileSchema();
+  const rows = await getDb()`
+    select id, name, status, profile, completion_percent, generated_by_ai,
+      is_sample, approved_at, updated_at
+    from company_profiles
+    where organization_id = ${organizationId}
+    order by updated_at desc
+  `;
+  return rows.map((row) => mapProfileRow(row));
+}
+
+export async function getCompanyProfile(organizationId: string, profileId?: string) {
+  await ensureCompanyProfileSchema();
+  const rows = profileId
+    ? await getDb()`
+        select id, name, status, profile, completion_percent, generated_by_ai,
+          is_sample, approved_at, updated_at
+        from company_profiles
+        where organization_id = ${organizationId} and id = ${profileId}
+        limit 1
+      `
+    : await getDb()`
+        select id, name, status, profile, completion_percent, generated_by_ai,
+          is_sample, approved_at, updated_at
+        from company_profiles
+        where organization_id = ${organizationId}
+        order by updated_at desc
+        limit 1
+      `;
+  return rows[0] ? mapProfileRow(rows[0]) : null;
+}
+
 export async function saveCompanyProfile({
   organizationId,
   userId,
+  name,
+  profileId,
   profile,
   generatedByAi = false,
+  isSample = false,
 }: {
   organizationId: string;
   userId: string;
+  name: string;
+  profileId?: string;
   profile: CompanyProfile;
   generatedByAi?: boolean;
+  isSample?: boolean;
 }) {
   await ensureCompanyProfileSchema();
   const parsed = companyProfileSchema.parse(profile);
   const completion = companyProfileCompletion(parsed);
-  const rows = await getDb()`
-    insert into company_profiles (
-      organization_id, status, profile, completion_percent, generated_by_ai, updated_at
-    ) values (
-      ${organizationId}, 'draft', ${JSON.stringify(parsed)}::jsonb,
-      ${completion}, ${generatedByAi}, now()
-    )
-    on conflict (organization_id) do update set
-      status = 'draft',
-      profile = excluded.profile,
-      completion_percent = excluded.completion_percent,
-      generated_by_ai = excluded.generated_by_ai,
-      approved_by = null,
-      approved_at = null,
-      updated_at = now()
-    returning id
-  `;
+  const normalizedName = name.trim().slice(0, 120);
+  if (!normalizedName) throw new Error("Profile name is required");
+  const rows = profileId
+    ? await getDb()`
+        update company_profiles set
+          name = ${normalizedName}, status = 'draft',
+          profile = ${JSON.stringify(parsed)}::jsonb,
+          completion_percent = ${completion},
+          generated_by_ai = ${generatedByAi},
+          is_sample = ${isSample},
+          approved_by = null, approved_at = null, updated_at = now()
+        where id = ${profileId} and organization_id = ${organizationId}
+        returning id
+      `
+    : await getDb()`
+        insert into company_profiles (
+          organization_id, name, status, profile, completion_percent,
+          generated_by_ai, is_sample, updated_at
+        ) values (
+          ${organizationId}, ${normalizedName}, 'draft',
+          ${JSON.stringify(parsed)}::jsonb, ${completion},
+          ${generatedByAi}, ${isSample}, now()
+        )
+        returning id
+      `;
+  if (!rows[0]) throw new Error("Profile was not found");
   await getDb()`
     insert into audit_events (organization_id, actor_user_id, action, entity_type, entity_id)
     values (${organizationId}, ${userId}, 'company_profile.saved', 'company_profile', ${String(rows[0].id)})

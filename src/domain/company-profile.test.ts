@@ -3,6 +3,7 @@ import {
   companyProfileCompletion,
   companyProfileSchema,
   emptyCompanyProfile,
+  sampleCompanyProfile,
 } from "./company-profile";
 
 describe("company profile", () => {
@@ -16,5 +17,11 @@ describe("company profile", () => {
       ...emptyCompanyProfile,
       identity: { ...emptyCompanyProfile.identity, legalName: "Example GmbH" },
     })).toBeGreaterThan(0);
+  });
+
+  it("keeps the generated sample schema-valid and explicitly fictional", () => {
+    const sample = companyProfileSchema.parse(sampleCompanyProfile);
+    expect(sample.identity.legalName).toContain("Example");
+    expect(sample.evidenceSummary[0].claim).toContain("fictional");
   });
 });
