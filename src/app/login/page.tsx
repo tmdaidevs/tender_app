@@ -1,6 +1,8 @@
 import { Database, LockKeyhole, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
+import { ProcurelioLogo } from "@/app/components/procurelio-logo";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -14,7 +16,7 @@ export default async function LoginPage({
   return (
     <main className="login-shell">
       <section className="login-story">
-        <div className="brand"><span className="brandmark">P</span><span>Procurelio</span></div>
+        <Link className="brand" href="/" aria-label="Procurelio home"><ProcurelioLogo /></Link>
         <div>
           <p className="eyebrow">EVIDENCE-LED PROCUREMENT</p>
           <h1>Real opportunities.<br />Qualified decisions.</h1>

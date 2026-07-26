@@ -7,6 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
+import { ProcurelioLogo } from "@/app/components/procurelio-logo";
 import type { SessionUser } from "@/lib/auth";
 
 export function MarketplaceSidebar({
@@ -18,7 +19,7 @@ export function MarketplaceSidebar({
 }) {
   return (
     <aside className="sidebar">
-      <div className="brand"><span className="brandmark">P</span><span>Procurelio</span></div>
+      <Link className="brand" href="/" aria-label="Procurelio home"><ProcurelioLogo /></Link>
       <div className="workspace">
         <span className="avatar">{user.organizationName?.slice(0, 2).toUpperCase() ?? "TL"}</span>
         <span>
