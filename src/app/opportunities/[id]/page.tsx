@@ -1,13 +1,9 @@
 import {
   ArrowLeft,
   ArrowUpRight,
-  Building2,
-  CalendarDays,
-  CircleDollarSign,
   Database,
   FileText,
   Fingerprint,
-  MapPin,
   Tags,
   Sparkles,
 } from "lucide-react";
@@ -28,14 +24,6 @@ function formatDate(value: string | null, includeTime = false) {
     ...(includeTime ? { hour: "2-digit", minute: "2-digit" } : {}),
     timeZone: "Europe/Berlin",
   }).format(new Date(value));
-}
-
-function formatValue(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 export default async function OpportunityDetail({
@@ -82,38 +70,42 @@ export default async function OpportunityDetail({
           </span>
         </div>
 
-        <section className="detail-facts" aria-label="Key tender facts">
-          <article>
-            <CalendarDays size={18} />
-            <small>DEADLINE</small>
-            <strong>{formatDate(tender.dates.deadlineAt, true)}</strong>
-          </article>
-          <article>
-            <CircleDollarSign size={18} />
-            <small>ESTIMATED VALUE</small>
-            <strong>
-              {tender.value
-                ? formatValue(tender.value.amount, tender.value.currency)
-                : "Not disclosed"}
-            </strong>
-          </article>
-          <article>
-            <MapPin size={18} />
-            <small>PLACE OF PERFORMANCE</small>
-            <strong>
-              {tender.placesOfPerformance.map((place) => place.countryCode).join(", ") ||
-                "Not supplied"}
-            </strong>
-          </article>
-          <article>
-            <FileText size={18} />
-            <small>NOTICE TYPE</small>
-            <strong>{tender.noticeType ?? "Not supplied"}</strong>
-          </article>
-        </section>
-
         {enrichment ? (
-          <EnrichedTenderBrief enrichment={enrichment} />
+          <EnrichedTenderBrief
+            enrichment={enrichment}
+            officialDetails={(
+              <>
+                <section className="panel detail-section">
+                  <div className="section-title"><FileText size={18} /><h2>Opportunity description</h2></div>
+                  <p className="detail-description">
+                    {tender.summary ?? "The official source did not supply a normalized description."}
+                  </p>
+                </section>
+                <section className="panel detail-section">
+                  <div className="section-title"><Tags size={18} /><h2>Classification</h2></div>
+                  <div className="detail-tags">
+                    {tender.classifications.cpvCodes.length > 0
+                      ? tender.classifications.cpvCodes.map((code) => <span key={code}>CPV {code}</span>)
+                      : <p>No CPV codes supplied.</p>}
+                  </div>
+                </section>
+              </>
+            )}
+            sourcePanel={(
+              <section className="panel detail-section">
+                <div className="section-title"><Fingerprint size={18} /><h2>Source & provenance</h2></div>
+                <dl>
+                  <div><dt>Source</dt><dd>{tender.source.name}</dd></div>
+                  <div><dt>Notice ID</dt><dd>{tender.source.noticeIdentifier}</dd></div>
+                  <div><dt>Retrieved</dt><dd>{formatDate(tender.dates.retrievedAt, true)}</dd></div>
+                  <div><dt>Stored version</dt><dd>{tender.provenance.latestVersion ?? "Not versioned"}</dd></div>
+                </dl>
+                <Link className="api-link" href={`/api/tenders/${tender.id}`}>
+                  View canonical JSON <ArrowUpRight size={13} />
+                </Link>
+              </section>
+            )}
+          />
         ) : (
           <section className="ai-pending-card">
             <span><Sparkles size={19} /></span>
@@ -128,27 +120,13 @@ export default async function OpportunityDetail({
           </section>
         )}
 
-        <div className="official-data-heading">
-          <small>OFFICIAL SOURCE INFORMATION</small>
-          <h2>Original opportunity details</h2>
-        </div>
-
-        <div className={`detail-grid ${enrichment ? "canonical-detail-grid" : ""}`}>
+        {!enrichment && <div className="detail-grid">
           <section className="panel detail-section">
             <div className="section-title"><FileText size={18} /><h2>Opportunity description</h2></div>
             <p className="detail-description">
               {tender.summary ?? "The official source did not supply a normalized description."}
             </p>
           </section>
-
-          <aside className="panel detail-section">
-            <div className="section-title"><Building2 size={18} /><h2>Contracting authority</h2></div>
-            <dl>
-              <div><dt>Buyer</dt><dd>{tender.buyer.name ?? "Not supplied"}</dd></div>
-              <div><dt>Status</dt><dd>{tender.status}</dd></div>
-              <div><dt>Published</dt><dd>{formatDate(tender.dates.publishedAt)}</dd></div>
-            </dl>
-          </aside>
 
           <section className="panel detail-section">
             <div className="section-title"><Tags size={18} /><h2>Classification</h2></div>
@@ -171,7 +149,7 @@ export default async function OpportunityDetail({
               View canonical JSON <ArrowUpRight size={13} />
             </Link>
           </aside>
-        </div>
+        </div>}
 
       </section>
     </main>
