@@ -90,7 +90,11 @@ function normalizeNotice(raw: Record<string, unknown>): TedTender | null {
     summary: firstString(raw["description-proc"]),
     buyerName: firstString(raw["buyer-name"]),
     countryCodes: countryCodes(raw["place-of-performance"]),
-    cpvCodes: scalarStrings(raw["classification-cpv"]).filter((value) => /^\d{8}$/.test(value)),
+    cpvCodes: [
+      ...new Set(
+        scalarStrings(raw["classification-cpv"]).filter((value) => /^\d{8}$/.test(value)),
+      ),
+    ],
     estimatedValue:
       numericValue(raw["estimated-value-proc"]) ??
       numericValue(raw["estimated-value-lot"]),
@@ -116,7 +120,7 @@ export async function fetchTedTenders(limit = 100): Promise<TedTender[]> {
     "place-of-performance IN (DEU AUT)",
     `publication-date = (${formatTedDate(from)} <> ${formatTedDate(now)})`,
     "(classification-cpv = 72* OR classification-cpv = 73* OR classification-cpv = 79* OR classification-cpv = 80*)",
-  ].join(" AND ");
+  ].join(" AND ") + " SORT BY publication-date DESC";
 
   const response = await fetch(TED_SEARCH_URL, {
     method: "POST",

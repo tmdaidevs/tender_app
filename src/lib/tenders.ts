@@ -35,6 +35,7 @@ export async function listTenders(input: z.input<typeof listInputSchema>) {
     join tender_sources s on s.id = t.source_id
     where t.lane = 'public_import'
       and t.status = 'published'
+      and (t.deadline_at is null or t.deadline_at >= now())
       and (${q} = '' or to_tsvector('simple',
         coalesce(t.title, '') || ' ' || coalesce(t.summary, '') || ' ' || coalesce(t.buyer_name, '')
       ) @@ plainto_tsquery('simple', ${q}))
