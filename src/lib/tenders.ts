@@ -24,6 +24,32 @@ export type TenderListItem = {
   retrievedAt: string;
 };
 
+export type TenderSourceStatus = {
+  code: string;
+  name: string;
+  baseUrl: string;
+  lastSuccessfulSyncAt: string | null;
+  lastError: string | null;
+};
+
+export async function listTenderSourceStatuses() {
+  const rows = await getDb()`
+    select code, name, base_url, last_successful_sync_at, last_error
+    from tender_sources
+    order by name asc
+  `;
+
+  return rows.map((row): TenderSourceStatus => ({
+    code: String(row.code),
+    name: String(row.name),
+    baseUrl: String(row.base_url),
+    lastSuccessfulSyncAt: row.last_successful_sync_at
+      ? new Date(String(row.last_successful_sync_at)).toISOString()
+      : null,
+    lastError: row.last_error ? String(row.last_error) : null,
+  }));
+}
+
 export async function listTenders(input: z.input<typeof listInputSchema>) {
   const { q, country, limit } = listInputSchema.parse(input);
   const sql = getDb();

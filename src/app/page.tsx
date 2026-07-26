@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { listTenders } from "@/lib/tenders";
+import { listTenders, listTenderSourceStatuses } from "@/lib/tenders";
 import { syncPublicTenders } from "./actions";
 
 function formatDeadline(value: string | null) {
@@ -40,6 +40,18 @@ function sourceHost(value: string) {
   }
 }
 
+function formatSyncTime(value: string | null) {
+  if (!value) return "Awaiting first refresh";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: "Europe/Berlin",
+  }).format(new Date(value));
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -47,12 +59,20 @@ export default async function Home({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const tenders = await listTenders({
-    q: params.q ?? "",
-    country: params.country,
-    limit: 50,
-  });
+  const [tenders, sources] = await Promise.all([
+    listTenders({
+      q: params.q ?? "",
+      country: params.country,
+      limit: 50,
+    }),
+    listTenderSourceStatuses(),
+  ]);
   const nextDeadline = tenders.find((tender) => tender.deadlineAt)?.deadlineAt ?? null;
+  const latestSourceSync = sources
+    .map((source) => source.lastSuccessfulSyncAt)
+    .filter((value): value is string => value !== null)
+    .sort()
+    .at(-1) ?? null;
 
   return (
     <main className="shell">
@@ -95,7 +115,7 @@ export default async function Home({
 
         <section className="signal-grid" aria-label="Marketplace summary">
           <article><span className="signal-icon violet"><Search size={19} /></span><div><small>VISIBLE OPPORTUNITIES</small><strong>{tenders.length}</strong><p>live database records</p></div></article>
-          <article><span className="signal-icon teal"><ShieldCheck size={19} /></span><div><small>OFFICIAL SOURCE</small><strong>TED</strong><p>European Union</p></div></article>
+          <article><span className="signal-icon teal"><ShieldCheck size={19} /></span><div><small>LAST DATABASE REFRESH</small><strong className="date-metric">{formatSyncTime(latestSourceSync)}</strong><p>scheduled every five minutes</p></div></article>
           <article><span className="signal-icon amber"><FileText size={19} /></span><div><small>NEXT DEADLINE</small><strong className="date-metric">{formatDeadline(nextDeadline)}</strong><p>source-provided date</p></div></article>
           <article><span className="signal-icon blue"><Database size={19} /></span><div><small>DATA MODE</small><strong>Live</strong><p>no tender fixtures</p></div></article>
         </section>
