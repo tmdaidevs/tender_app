@@ -11,14 +11,13 @@ export const metadata: Metadata = {
     title: "Procurelio — Tenders, made clear.",
     description: "AI-powered tender marketplace for Germany and Austria.",
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Procurelio — Tenders, made clear." }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Procurelio — Tenders, made clear.",
     description: "AI-powered tender marketplace for Germany and Austria.",
-    images: ["/og.png"],
   },
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { ProcurelioLogo } from "@/app/components/procurelio-logo";
 
 export function ProcurelioLanding() {
   useEffect(() => {
@@ -38,7 +39,7 @@ export function ProcurelioLanding() {
     <main className="landing-shell">
       <nav className="landing-nav" aria-label="Landing page navigation">
         <Link className="landing-wordmark" href="/" aria-label="Procurelio home">
-          <span>P</span>Procurelio
+          <ProcurelioLogo />
         </Link>
         <div className="landing-nav-links">
           <a href="#approach">How it works</a>
@@ -243,7 +244,7 @@ export function ProcurelioLanding() {
       </section>
 
       <footer className="landing-footer">
-        <Link className="landing-wordmark" href="/"><span>P</span>Procurelio</Link>
+        <Link className="landing-wordmark" href="/" aria-label="Procurelio home"><ProcurelioLogo /></Link>
         <p>Clear procurement for capable companies.</p>
         <div><Link href="/login">Sign in</Link><a href="#approach">How it works</a><span>© 2026 Procurelio</span></div>
       </footer>
