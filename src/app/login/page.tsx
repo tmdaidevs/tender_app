@@ -8,13 +8,13 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  if (await getSessionUser()) redirect("/");
+  if (await getSessionUser()) redirect("/marketplace");
   const { error } = await searchParams;
 
   return (
     <main className="login-shell">
       <section className="login-story">
-        <div className="brand"><span className="brandmark">T</span><span>TenderLoop</span></div>
+        <div className="brand"><span className="brandmark">P</span><span>Procurelio</span></div>
         <div>
           <p className="eyebrow">EVIDENCE-LED PROCUREMENT</p>
           <h1>Real opportunities.<br />Qualified decisions.</h1>
@@ -29,7 +29,7 @@ export default async function LoginPage({
       <section className="login-panel">
         <div className="login-card">
           <p className="eyebrow">WELCOME BACK</p>
-          <h2>Sign in to TenderLoop</h2>
+          <h2>Sign in to Procurelio</h2>
           <p>Use your organization account to continue.</p>
           {error && <div className="login-error" role="alert">Email or password is incorrect.</div>}
           <form action={login}>

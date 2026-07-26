@@ -185,7 +185,7 @@ export async function fetchPublicWebsite(input: string) {
     redirect: "error",
     cache: "no-store",
     signal: AbortSignal.timeout(15_000),
-    headers: { accept: "text/html,application/xhtml+xml", "user-agent": "TenderLoop/0.3 company-profile-builder" },
+    headers: { accept: "text/html,application/xhtml+xml", "user-agent": "Procurelio/0.3 company-profile-builder" },
   });
   if (!response.ok) throw new Error(`Website returned ${response.status}`);
   const contentType = response.headers.get("content-type") ?? "";

@@ -156,7 +156,7 @@ export function MarketplaceFilters({
             </div>
 
             <div className="filter-actions">
-              <Link href="/"><X size={15} /> Clear all</Link>
+              <Link href="/marketplace"><X size={15} /> Clear all</Link>
               <button className="primary" type="submit">Apply filters</button>
             </div>
           </div>
