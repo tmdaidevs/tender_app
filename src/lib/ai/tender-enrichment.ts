@@ -77,7 +77,7 @@ async function fetchOfficialDocument(url: string) {
   const response = await fetch(url, {
     headers: {
       accept: "application/xml,text/xml;q=0.9,text/html;q=0.8",
-      "user-agent": "TenderLoop/0.2 evidence-enrichment",
+      "user-agent": "Procurelio/0.2 evidence-enrichment",
     },
     cache: "no-store",
     signal: AbortSignal.timeout(20_000),

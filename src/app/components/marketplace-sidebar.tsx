@@ -18,7 +18,7 @@ export function MarketplaceSidebar({
 }) {
   return (
     <aside className="sidebar">
-      <div className="brand"><span className="brandmark">T</span><span>TenderLoop</span></div>
+      <div className="brand"><span className="brandmark">P</span><span>Procurelio</span></div>
       <div className="workspace">
         <span className="avatar">{user.organizationName?.slice(0, 2).toUpperCase() ?? "TL"}</span>
         <span>
@@ -28,7 +28,7 @@ export function MarketplaceSidebar({
       </div>
       <nav aria-label="Primary navigation">
         <p>MARKETPLACE</p>
-        <Link className={`nav-link ${active === "marketplace" ? "active" : ""}`} href="/">
+        <Link className={`nav-link ${active === "marketplace" ? "active" : ""}`} href="/marketplace">
           <Search size={18} /> Public opportunities
         </Link>
         <Link className="nav-link" href="/api/tenders">

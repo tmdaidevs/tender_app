@@ -49,7 +49,7 @@ export default async function OpportunityDetail({
     <main className="shell">
       <MarketplaceSidebar user={user} active="detail" />
       <section className="content detail-content">
-        <Link className="back-link" href="/"><ArrowLeft size={15} /> Back to marketplace</Link>
+        <Link className="back-link" href="/marketplace"><ArrowLeft size={15} /> Back to marketplace</Link>
 
         <header className="detail-header">
           <div>

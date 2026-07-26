@@ -27,5 +27,5 @@ export async function login(formData: FormData) {
 
   if (!user || !valid) redirect("/login?error=invalid");
   await createSession(String(user.id));
-  redirect("/");
+  redirect("/marketplace");
 }
