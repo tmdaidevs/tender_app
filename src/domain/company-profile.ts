@@ -2,6 +2,11 @@ import { z } from "zod";
 
 const text = z.string().max(2000).nullable();
 const shortText = z.string().max(500).nullable();
+const evidenceIds = z.array(z.string().max(100)).max(50).default([]);
+const money = z.object({
+  amount: z.number().nonnegative().nullable(),
+  currency: z.string().max(3).nullable(),
+});
 
 export const companyProfileSchema = z.object({
   identity: z.object({
@@ -31,6 +36,23 @@ export const companyProfileSchema = z.object({
     cpvCodes: z.array(z.string().max(20)).max(100),
     deliveryCountries: z.array(z.string().max(2)).max(100),
     deliveryModels: z.array(z.string().max(100)).max(20),
+    buyerTypes: z.array(z.string().max(100)).max(20).default([]),
+    contractTypes: z.array(z.string().max(100)).max(20).default([]),
+    keywords: z.array(z.string().max(200)).max(100).default([]),
+  }),
+  deliveryFootprint: z.object({
+    offices: z.array(z.object({
+      city: shortText,
+      countryCode: z.string().max(2).nullable(),
+      nutsCodes: z.array(z.string().max(10)).max(30).default([]),
+    })).max(50).default([]),
+    serviceRegions: z.array(z.string().max(100)).max(100).default([]),
+    onSiteRadiusKm: z.number().int().nonnegative().nullable().default(null),
+    remoteDeliveryAvailable: z.boolean().default(false),
+    dataResidencyCountries: z.array(z.string().max(2)).max(100).default([]),
+  }).default({
+    offices: [], serviceRegions: [], onSiteRadiusKm: null,
+    remoteDeliveryAvailable: false, dataResidencyCountries: [],
   }),
   procurementReadiness: z.object({
     electronicSubmissionReady: z.boolean(),
@@ -51,12 +73,23 @@ export const companyProfileSchema = z.object({
     socialSecurityCompliance: z.boolean().nullable(),
     professionalRegistrations: z.array(z.string().max(500)).max(50),
     licenses: z.array(z.string().max(500)).max(50),
+    insolvencyClear: z.boolean().nullable().default(null),
+    corruptionAndFraudClear: z.boolean().nullable().default(null),
+    laborLawCompliance: z.boolean().nullable().default(null),
+    environmentalLawCompliance: z.boolean().nullable().default(null),
+    conflictOfInterestClear: z.boolean().nullable().default(null),
+    selfDeclarationValidUntil: shortText.default(null),
+    evidenceIds,
   }),
   certifications: z.array(z.object({
     name: z.string().max(500),
     issuer: shortText,
     certificateNumber: shortText,
+    scope: text.default(null),
+    issuedAt: shortText.default(null),
     validUntil: shortText,
+    verificationStatus: z.enum(["unverified", "documented", "verified", "expired"]).default("unverified"),
+    evidenceIds,
   })).max(100),
   financial: z.object({
     currencies: z.array(z.string().max(3)).max(20),
@@ -64,12 +97,37 @@ export const companyProfileSchema = z.object({
     publicLiability: shortText,
     minimumContractValue: shortText,
     maximumContractValue: shortText,
+    contractValueRange: z.object({
+      minimum: money,
+      maximum: money,
+    }).default({
+      minimum: { amount: null, currency: null },
+      maximum: { amount: null, currency: null },
+    }),
+    annualTurnover: z.array(z.object({
+      year: z.number().int().min(1900).max(2200),
+      amount: z.number().nonnegative(),
+      currency: z.string().max(3),
+      evidenceIds,
+    })).max(10).default([]),
+    insurances: z.array(z.object({
+      type: z.string().max(200),
+      coverage: money,
+      validUntil: shortText,
+      evidenceIds,
+    })).max(30).default([]),
+    creditRating: shortText.default(null),
   }),
   team: z.array(z.object({
     role: z.string().max(300),
     skills: z.array(z.string().max(300)).max(50),
     languages: z.array(z.string().max(3)).max(20),
     certifications: z.array(z.string().max(300)).max(30),
+    headcount: z.number().int().nonnegative().nullable().default(null),
+    availableFte: z.number().nonnegative().nullable().default(null),
+    minimumYearsExperience: z.number().nonnegative().nullable().default(null),
+    locations: z.array(z.string().max(100)).max(30).default([]),
+    evidenceIds,
   })).max(100),
   references: z.array(z.object({
     client: shortText,
@@ -78,7 +136,69 @@ export const companyProfileSchema = z.object({
     services: z.array(z.string().max(300)).max(50),
     outcome: text,
     permissionToDisclose: z.boolean(),
+    startDate: shortText.default(null),
+    endDate: shortText.default(null),
+    contractValue: money.default({ amount: null, currency: null }),
+    countryCode: z.string().max(2).nullable().default(null),
+    cpvCodes: z.array(z.string().max(20)).max(50).default([]),
+    industries: z.array(z.string().max(300)).max(30).default([]),
+    supplierRole: shortText.default(null),
+    teamSize: z.number().int().nonnegative().nullable().default(null),
+    publicSector: z.boolean().nullable().default(null),
+    evidenceIds,
   })).max(100),
+  capacity: z.object({
+    availableFrom: shortText,
+    totalAvailableFte: z.number().nonnegative().nullable(),
+    concurrentProjects: z.number().int().nonnegative().nullable(),
+    typicalMobilizationDays: z.number().int().nonnegative().nullable(),
+  }).default({
+    availableFrom: null, totalAvailableFte: null,
+    concurrentProjects: null, typicalMobilizationDays: null,
+  }),
+  securityAndCompliance: z.object({
+    securityClearances: z.array(z.string().max(300)).max(50),
+    gdprReady: z.boolean().nullable(),
+    accessibilityStandards: z.array(z.string().max(200)).max(30),
+    hostingModels: z.array(z.string().max(100)).max(20),
+    securityIncidentResponse: z.boolean().nullable(),
+    evidenceIds,
+  }).default({
+    securityClearances: [], gdprReady: null, accessibilityStandards: [],
+    hostingModels: [], securityIncidentResponse: null, evidenceIds: [],
+  }),
+  sustainability: z.object({
+    environmentalPolicies: z.array(z.string().max(300)).max(30),
+    socialPolicies: z.array(z.string().max(300)).max(30),
+    carbonReportingAvailable: z.boolean().nullable(),
+    diversityPolicyAvailable: z.boolean().nullable(),
+    evidenceIds,
+  }).default({
+    environmentalPolicies: [], socialPolicies: [],
+    carbonReportingAvailable: null, diversityPolicyAvailable: null, evidenceIds: [],
+  }),
+  participationPreferences: z.object({
+    minimumNoticeDays: z.number().int().nonnegative().nullable(),
+    consortiumParticipation: z.boolean(),
+    subcontractingOffered: z.boolean(),
+    subcontractingAccepted: z.boolean(),
+    lotsSupported: z.boolean(),
+    preferredCurrencies: z.array(z.string().max(3)).max(20),
+  }).default({
+    minimumNoticeDays: null, consortiumParticipation: false,
+    subcontractingOffered: false, subcontractingAccepted: false,
+    lotsSupported: true, preferredCurrencies: [],
+  }),
+  evidence: z.array(z.object({
+    id: z.string().max(100),
+    type: z.enum(["website", "document", "certificate", "register", "reference", "declaration", "other"]),
+    label: z.string().max(500),
+    sourceUrl: z.string().max(1000).nullable(),
+    fileName: z.string().max(500).nullable(),
+    issuedAt: shortText,
+    validUntil: shortText,
+    verificationStatus: z.enum(["unverified", "documented", "verified", "expired"]),
+  })).max(300).default([]),
   evidenceSummary: z.array(z.object({
     claim: z.string().max(1000),
     sourceLabel: z.string().max(500),
@@ -97,7 +217,11 @@ export const emptyCompanyProfile: CompanyProfile = {
   contacts: [],
   capabilities: {
     services: [], industries: [], technologies: [], cpvCodes: [],
-    deliveryCountries: [], deliveryModels: [],
+    deliveryCountries: [], deliveryModels: [], buyerTypes: [], contractTypes: [], keywords: [],
+  },
+  deliveryFootprint: {
+    offices: [], serviceRegions: [], onSiteRadiusKm: null,
+    remoteDeliveryAvailable: false, dataResidencyCountries: [],
   },
   procurementReadiness: {
     electronicSubmissionReady: false, platforms: [], euLoginAvailable: false,
@@ -108,15 +232,41 @@ export const emptyCompanyProfile: CompanyProfile = {
   },
   eligibility: {
     exclusionGroundsClear: null, taxCompliance: null, socialSecurityCompliance: null,
-    professionalRegistrations: [], licenses: [],
+    professionalRegistrations: [], licenses: [], insolvencyClear: null,
+    corruptionAndFraudClear: null, laborLawCompliance: null,
+    environmentalLawCompliance: null, conflictOfInterestClear: null,
+    selfDeclarationValidUntil: null, evidenceIds: [],
   },
   certifications: [],
   financial: {
     currencies: [], professionalIndemnity: null, publicLiability: null,
     minimumContractValue: null, maximumContractValue: null,
+    contractValueRange: {
+      minimum: { amount: null, currency: null },
+      maximum: { amount: null, currency: null },
+    },
+    annualTurnover: [], insurances: [], creditRating: null,
   },
   team: [],
   references: [],
+  capacity: {
+    availableFrom: null, totalAvailableFte: null,
+    concurrentProjects: null, typicalMobilizationDays: null,
+  },
+  securityAndCompliance: {
+    securityClearances: [], gdprReady: null, accessibilityStandards: [],
+    hostingModels: [], securityIncidentResponse: null, evidenceIds: [],
+  },
+  sustainability: {
+    environmentalPolicies: [], socialPolicies: [],
+    carbonReportingAvailable: null, diversityPolicyAvailable: null, evidenceIds: [],
+  },
+  participationPreferences: {
+    minimumNoticeDays: null, consortiumParticipation: false,
+    subcontractingOffered: false, subcontractingAccepted: false,
+    lotsSupported: true, preferredCurrencies: [],
+  },
+  evidence: [],
   evidenceSummary: [],
 };
 
@@ -148,6 +298,14 @@ export const sampleCompanyProfile: CompanyProfile = {
     cpvCodes: ["72000000", "72200000", "72300000"],
     deliveryCountries: ["DE", "AT", "CH"],
     deliveryModels: ["Remote", "Hybrid", "On-site"],
+    buyerTypes: ["Public sector", "Utilities"],
+    contractTypes: ["Services", "Framework agreements"],
+    keywords: ["cloud", "data platform", "software delivery"],
+  },
+  deliveryFootprint: {
+    offices: [{ city: "Berlin", countryCode: "DE", nutsCodes: ["DE300"] }],
+    serviceRegions: ["DACH"], onSiteRadiusKm: 500,
+    remoteDeliveryAvailable: true, dataResidencyCountries: ["DE", "AT"],
   },
   procurementReadiness: {
     electronicSubmissionReady: true,
@@ -168,12 +326,19 @@ export const sampleCompanyProfile: CompanyProfile = {
     socialSecurityCompliance: null,
     professionalRegistrations: [],
     licenses: [],
+    insolvencyClear: null, corruptionAndFraudClear: null,
+    laborLawCompliance: null, environmentalLawCompliance: null,
+    conflictOfInterestClear: null, selfDeclarationValidUntil: null, evidenceIds: [],
   },
   certifications: [{
     name: "ISO 27001 (sample only)",
     issuer: "Sample issuer",
     certificateNumber: "SAMPLE-CERT-001",
+    scope: "Sample scope — verify before use",
+    issuedAt: null,
     validUntil: null,
+    verificationStatus: "unverified",
+    evidenceIds: [],
   }],
   financial: {
     currencies: ["EUR", "CHF"],
@@ -181,12 +346,21 @@ export const sampleCompanyProfile: CompanyProfile = {
     publicLiability: "Sample value — verify before use",
     minimumContractValue: "EUR 25,000",
     maximumContractValue: "EUR 250,000",
+    contractValueRange: {
+      minimum: { amount: 25_000, currency: "EUR" },
+      maximum: { amount: 250_000, currency: "EUR" },
+    },
+    annualTurnover: [],
+    insurances: [],
+    creditRating: null,
   },
   team: [{
     role: "Software delivery team",
     skills: ["Solution architecture", "Software engineering", "Delivery management"],
     languages: ["DEU", "ENG"],
     certifications: [],
+    headcount: 12, availableFte: 3, minimumYearsExperience: 5,
+    locations: ["DE"], evidenceIds: [],
   }],
   references: [{
     client: "Sample public-sector client",
@@ -195,7 +369,30 @@ export const sampleCompanyProfile: CompanyProfile = {
     services: ["Software development", "Cloud consulting"],
     outcome: "Sample outcome — replace with an approved reference.",
     permissionToDisclose: false,
+    startDate: "2024-01", endDate: "2024-12",
+    contractValue: { amount: 180_000, currency: "EUR" },
+    countryCode: "DE", cpvCodes: ["72200000"], industries: ["Public sector"],
+    supplierRole: "Prime contractor", teamSize: 6, publicSector: true, evidenceIds: [],
   }],
+  capacity: {
+    availableFrom: null, totalAvailableFte: 3,
+    concurrentProjects: 4, typicalMobilizationDays: 20,
+  },
+  securityAndCompliance: {
+    securityClearances: [], gdprReady: true,
+    accessibilityStandards: ["EN 301 549"], hostingModels: ["EU cloud", "On-premises"],
+    securityIncidentResponse: true, evidenceIds: [],
+  },
+  sustainability: {
+    environmentalPolicies: [], socialPolicies: [],
+    carbonReportingAvailable: null, diversityPolicyAvailable: null, evidenceIds: [],
+  },
+  participationPreferences: {
+    minimumNoticeDays: 14, consortiumParticipation: true,
+    subcontractingOffered: true, subcontractingAccepted: true,
+    lotsSupported: true, preferredCurrencies: ["EUR"],
+  },
+  evidence: [],
   evidenceSummary: [{
     claim: "All values in this profile are fictional examples.",
     sourceLabel: "TenderLoop sample profile",
@@ -211,7 +408,13 @@ export function companyProfileCompletion(profile: CompanyProfile) {
     profile.capabilities.cpvCodes.length, profile.capabilities.deliveryCountries.length,
     profile.procurementReadiness.platforms.length,
     profile.procurementReadiness.tenderLanguages.length,
-    profile.certifications.length, profile.references.length,
+    profile.deliveryFootprint.serviceRegions.length || profile.deliveryFootprint.offices.length,
+    profile.financial.contractValueRange.maximum.amount,
+    profile.financial.annualTurnover.length,
+    profile.financial.insurances.length,
+    profile.certifications.length, profile.team.length, profile.references.length,
+    profile.capacity.typicalMobilizationDays === null ? null : "documented",
+    profile.securityAndCompliance.gdprReady === null ? null : "documented",
     profile.evidenceSummary.length,
   ];
   return Math.round(checks.filter(Boolean).length / checks.length * 100);

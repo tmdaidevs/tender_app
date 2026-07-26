@@ -12,7 +12,9 @@ an organization-wide mutable default.
 ## Creation paths
 
 - Guided setup collects legal identity, capabilities, CPV codes, delivery
-  coverage, tender languages, and operational electronic-submission readiness.
+  coverage, tender languages, commercial capacity, personnel, references,
+  compliance declarations, certifications, security posture, participation
+  preferences, and operational electronic-submission readiness.
 - AI-assisted setup accepts up to three public official website pages and five
   PDF documents (up to 4 MB combined). It creates a draft from those sources and leaves unsupported
   fields empty.
@@ -34,6 +36,35 @@ operational readiness, portal accounts, supported document formats, qualified
 electronic-signature capability, and tender-validity defaults. This makes the
 profile compatible with common eSubmission preparation workflows without
 claiming native submission to TED, eVergabe-Online, or another external portal.
+
+## Matching-ready fields
+
+The profile separates matchable supplier facts into:
+
+- capabilities: services, CPV codes, industries, technologies, buyer and
+  contract types, delivery models, and matching keywords;
+- geography: delivery countries, offices, NUTS codes, service regions,
+  on-site radius, remote delivery, and data-residency countries;
+- commercial capacity: numeric contract-value range, annual turnover by year,
+  insurance coverage, currencies, credit rating, mobilization time, available
+  FTE, and concurrent-project capacity;
+- qualification: structured certifications with issuer, scope, validity and
+  verification state, professional registrations, licences, and explicit
+  nullable exclusion/compliance declarations;
+- experience: team roles, headcount, availability, experience, skills,
+  languages and detailed references with dates, value, CPV, geography,
+  industry, supplier role, team size and client type;
+- security and policy: clearances, GDPR readiness, accessibility standards,
+  hosting models, incident response, environmental and social policies;
+- participation preferences: minimum notice period, consortium, subcontracting,
+  lot participation and preferred currencies;
+- evidence: stable evidence IDs, source identity, validity and verification
+  status that can be attached to individual matchable claims.
+
+Monetary matching uses the structured numeric fields. The legacy free-text
+contract and liability fields remain readable for existing profiles but must
+not be used by future deterministic matching. New fields carry defaults so
+profiles saved under the earlier schema continue to load without data loss.
 
 AI-generated profiles remain `draft` and require human review. Evidence is
 never converted automatically into an exclusion-ground decision, eligibility

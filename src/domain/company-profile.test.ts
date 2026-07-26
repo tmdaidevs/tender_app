@@ -24,4 +24,18 @@ describe("company profile", () => {
     expect(sample.identity.legalName).toContain("Example");
     expect(sample.evidenceSummary[0].claim).toContain("fictional");
   });
+
+  it("hydrates profiles saved before the matching-ready schema", () => {
+    const legacy = JSON.parse(JSON.stringify(emptyCompanyProfile)) as Record<string, unknown>;
+    delete legacy.deliveryFootprint;
+    delete legacy.capacity;
+    delete legacy.securityAndCompliance;
+    delete legacy.sustainability;
+    delete legacy.participationPreferences;
+    delete legacy.evidence;
+    const parsed = companyProfileSchema.parse(legacy);
+    expect(parsed.deliveryFootprint.offices).toEqual([]);
+    expect(parsed.financial.contractValueRange.maximum.amount).toBeNull();
+    expect(parsed.securityAndCompliance.gdprReady).toBeNull();
+  });
 });
