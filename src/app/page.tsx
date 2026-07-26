@@ -2,15 +2,16 @@ import {
   ArrowUpRight,
   Building2,
   Database,
-  FileText,
-  LogOut,
-  Search,
-  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { listTenders, listTenderSourceStatuses } from "@/lib/tenders";
-import { syncPublicTenders } from "./actions";
+import {
+  listTenders,
+  listTenderSourceStatuses,
+  tenderListInputSchema,
+} from "@/lib/tenders";
+import { MarketplaceFilters } from "./components/marketplace-filters";
+import { MarketplaceSidebar } from "./components/marketplace-sidebar";
 
 function formatDeadline(value: string | null) {
   if (!value) return "Not supplied";
@@ -55,19 +56,40 @@ function formatSyncTime(value: string | null) {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; country?: "DE" | "AT" | "CH" }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
+  const values = (name: string) => {
+    const value = params[name];
+    return Array.isArray(value) ? value : value ? [value] : [];
+  };
+  const value = (name: string) => values(name)[0];
+  const parsedFilters = tenderListInputSchema.safeParse({
+    q: value("q") ?? "",
+    countries: values("country"),
+    sources: values("source"),
+    buyer: value("buyer") ?? "",
+    cpv: value("cpv") ?? "",
+    publishedFrom: value("publishedFrom"),
+    publishedTo: value("publishedTo"),
+    deadlineFrom: value("deadlineFrom"),
+    deadlineTo: value("deadlineTo"),
+    minValue: value("minValue") ? Number(value("minValue")) : undefined,
+    maxValue: value("maxValue") ? Number(value("maxValue")) : undefined,
+    currency: value("currency"),
+    valueAvailability: value("valueAvailability") ?? "all",
+    deadlineAvailability: value("deadlineAvailability") ?? "all",
+    sort: value("sort") ?? "deadline_asc",
+    limit: 50,
+  });
+  const filters = parsedFilters.success
+    ? parsedFilters.data
+    : tenderListInputSchema.parse({ limit: 50 });
   const [tenders, sources] = await Promise.all([
-    listTenders({
-      q: params.q ?? "",
-      country: params.country,
-      limit: 50,
-    }),
+    listTenders(filters),
     listTenderSourceStatuses(),
   ]);
-  const nextDeadline = tenders.find((tender) => tender.deadlineAt)?.deadlineAt ?? null;
   const latestSourceSync = sources
     .map((source) => source.lastSuccessfulSyncAt)
     .filter((value): value is string => value !== null)
@@ -76,28 +98,7 @@ export default async function Home({
 
   return (
     <main className="shell">
-      <aside className="sidebar">
-        <div className="brand"><span className="brandmark">T</span><span>TenderLoop</span></div>
-        <div className="workspace">
-          <span className="avatar">{user.organizationName?.slice(0, 2).toUpperCase() ?? "TL"}</span>
-          <span><strong>{user.organizationName ?? "No organization"}</strong><small>{user.organizationRole ?? "Platform account"}</small></span>
-        </div>
-        <nav aria-label="Primary navigation">
-          <p>MARKETPLACE</p>
-          <Link className="nav-link active" href="/"><Search size={18} /> Public opportunities</Link>
-          <a className="nav-link" href="/api/tenders"><Database size={18} /> Tenders API</a>
-          <p>WORKSPACE</p>
-          <span className="nav-link disabled"><FileText size={18} /> Private tenders</span>
-          <span className="nav-link disabled"><Building2 size={18} /> Company profile</span>
-        </nav>
-        <div className="profile-progress">
-          <span><ShieldCheck size={17} /> Authenticated <strong>Neon</strong></span>
-          <small>{user.email}</small>
-        </div>
-        <form action="/logout" method="post">
-          <button className="logout-button"><LogOut size={16} /> Sign out</button>
-        </form>
-      </aside>
+      <MarketplaceSidebar user={user} />
 
       <section className="content">
         <header>
@@ -106,35 +107,19 @@ export default async function Home({
             <h1>Live tender marketplace</h1>
             <span>Current notices imported from Tenders Electronic Daily.</span>
           </div>
-          {user.platformRole === "platform_admin" && (
-            <form action={syncPublicTenders}>
-              <button className="primary"><Database size={17} /> Sync TED now</button>
-            </form>
-          )}
+          <div className="last-updated">
+            <small>LAST DATABASE REFRESH</small>
+            <strong>{formatSyncTime(latestSourceSync)}</strong>
+            <span>Scheduled every five minutes</span>
+          </div>
         </header>
-
-        <section className="signal-grid" aria-label="Marketplace summary">
-          <article><span className="signal-icon violet"><Search size={19} /></span><div><small>VISIBLE OPPORTUNITIES</small><strong>{tenders.length}</strong><p>live database records</p></div></article>
-          <article><span className="signal-icon teal"><ShieldCheck size={19} /></span><div><small>LAST DATABASE REFRESH</small><strong className="date-metric">{formatSyncTime(latestSourceSync)}</strong><p>scheduled every five minutes</p></div></article>
-          <article><span className="signal-icon amber"><FileText size={19} /></span><div><small>NEXT DEADLINE</small><strong className="date-metric">{formatDeadline(nextDeadline)}</strong><p>source-provided date</p></div></article>
-          <article><span className="signal-icon blue"><Database size={19} /></span><div><small>DATA MODE</small><strong>Live</strong><p>no tender fixtures</p></div></article>
-        </section>
 
         <section className="panel">
           <div className="panel-heading">
             <div><h2>Public opportunities</h2><p>Always verify deadline and status on the official submission portal.</p></div>
-            <a className="link" href="/api/tenders">Open JSON API <ArrowUpRight size={15} /></a>
+            <Link className="link" href="/api/tenders">Open JSON API <ArrowUpRight size={15} /></Link>
           </div>
-          <form className="market-filters" method="get">
-            <label><Search size={17} /><input name="q" defaultValue={params.q} placeholder="Search title, buyer or description" /></label>
-            <select name="country" defaultValue={params.country ?? ""} aria-label="Country">
-              <option value="">Germany & Austria</option>
-              <option value="DE">Germany</option>
-              <option value="AT">Austria</option>
-              <option value="CH">Switzerland</option>
-            </select>
-            <button className="primary" type="submit">Search</button>
-          </form>
+          <MarketplaceFilters filters={filters} sources={sources} />
 
           <div className="marketplace-columns" aria-hidden="true">
             <span>Opportunity</span>
@@ -147,7 +132,7 @@ export default async function Home({
             {tenders.map((tender) => (
               <article className="live-tender" key={tender.id}>
                 <span className="source-mark"><Building2 size={18} /></span>
-                <div className="live-main">
+                <Link className="live-main" href={`/opportunities/${tender.id}`}>
                   <h3>{tender.title}</h3>
                   <p>{tender.buyerName ?? "Buyer name not supplied"}</p>
                   <small>
@@ -158,7 +143,8 @@ export default async function Home({
                     {tender.countryCodes.map((country) => <em key={country}>{country}</em>)}
                     {tender.cpvCodes.slice(0, 3).map((cpv) => <em key={cpv}>CPV {cpv}</em>)}
                   </div>
-                </div>
+                  <span className="view-details">View full details <ArrowUpRight size={12} /></span>
+                </Link>
                 <div className="live-meta source-column">
                   <small>SOURCE</small>
                   <strong>{tender.sourceName}</strong>
