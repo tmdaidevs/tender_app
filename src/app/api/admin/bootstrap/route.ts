@@ -4,6 +4,7 @@ import { z } from "zod";
 import { syncTedTenders } from "@/connectors/ted";
 import { hashPassword } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { splitSqlStatements } from "@/lib/migrations";
 
 const inputSchema = z.object({
   email: z.string().email().max(254).transform((value) => value.toLowerCase()),
@@ -27,7 +28,9 @@ export async function POST(request: Request) {
     "utf8",
   );
   const sql = getDb();
-  await sql.query(migration);
+  for (const statement of splitSqlStatements(migration)) {
+    await sql.query(statement);
+  }
 
   const passwordHash = await hashPassword(parsed.data.password);
   const users = await sql`
