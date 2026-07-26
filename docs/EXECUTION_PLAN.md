@@ -6,8 +6,7 @@ Last updated: 2026-07-26
 
 - The GitHub repository is `tmdaidevs/tender_app`, but the local empty Git
   repository does not yet have a remote configured.
-- Supabase has not been created. The application therefore starts with
-  deterministic fictional demo data and provider boundaries.
+- Neon PostgreSQL is provisioned through the Vercel Marketplace.
 - `TenderLoop` is a replaceable working name controlled through configuration.
 - Private bids are described as **confidential until the deadline**. The MVP
   does not claim cryptographic sealing.
@@ -15,7 +14,8 @@ Last updated: 2026-07-26
 ## Architecture decisions
 
 - Next.js modular monolith, strict TypeScript, App Router, Vercel-compatible.
-- Supabase PostgreSQL/Auth/Storage is the intended hosted persistence layer.
+- Neon PostgreSQL is the hosted persistence layer. Authentication uses
+  database-backed opaque sessions with scrypt password hashes.
 - Domain rules stay independent of UI and providers.
 - Eligibility hard gates execute before an explainable weighted Fit Score.
 - No automatic awards, public-portal submissions, payments, or external
@@ -49,14 +49,14 @@ Last updated: 2026-07-26
 
 - Repository and master specification inspection.
 - MVP wording and scope recorded.
-- Application shell and supplier opportunity dashboard.
+- Database-backed application shell, login, public opportunity marketplace,
+  TED connector, and typed JSON API.
 - Initial matching domain rules and unit tests.
 
 ## Remaining / external dependencies
 
-- Create Supabase project and supply URL, anon key, service-role key and
-  database URL.
-- Connect the local repository to GitHub and Vercel.
+- Run the one-time Neon migration/bootstrap in the Vercel Preview environment.
+- Promote the verified preview when production publication is approved.
 - Complete all marketplace vertical slices and security tests before any claim
   of production readiness.
 - Add OpenAI, transactional email and Stripe test credentials only when their

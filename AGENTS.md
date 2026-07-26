@@ -4,7 +4,7 @@
 
 - `src/app`: Next.js App Router UI and route handlers.
 - `src/domain`: framework-independent domain logic and unit tests.
-- `supabase/migrations`: versioned PostgreSQL schema and row-level security.
+- `database/migrations`: versioned Neon PostgreSQL schema.
 - `docs`: architecture, product boundaries, security notes, and execution status.
 
 ## Commands
@@ -19,8 +19,8 @@
 
 Use strict TypeScript and Zod at external boundaries. Keep authorization and
 state transitions in server-side domain services. Every tenant-owned record
-must carry an `organization_id`; Supabase RLS is mandatory in hosted
-environments. Bid contents are confidential until the deadline and must never
+must carry an `organization_id`; authorization must be enforced in server-side
+domain services and database policies where applicable. Bid contents are confidential until the deadline and must never
 be returned to buyer clients before server-side closure checks pass. AI output
 is a suggestion, never evidence or an award decision. Never commit secrets or
 real tender data.
