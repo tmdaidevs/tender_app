@@ -50,7 +50,10 @@ function firstString(value: unknown) {
 
 function isoDate(value: unknown) {
   for (const candidate of scalarStrings(value)) {
-    const date = new Date(candidate);
+    const normalized = /^\d{4}-\d{2}-\d{2}[+-]\d{2}:\d{2}$/.test(candidate)
+      ? `${candidate.slice(0, 10)}T00:00:00${candidate.slice(10)}`
+      : candidate;
+    const date = new Date(normalized);
     if (!Number.isNaN(date.getTime())) return date.toISOString();
   }
   return null;
@@ -84,21 +87,37 @@ function normalizeNotice(raw: Record<string, unknown>): TedTender | null {
     sourceIdentifier,
     sourceUrl: `https://ted.europa.eu/en/notice/-/detail/${encodeURIComponent(sourceIdentifier)}`,
     title,
-    summary: firstString(raw["description-procurement"]),
+    summary: firstString(raw["description-proc"]),
     buyerName: firstString(raw["buyer-name"]),
     countryCodes: countryCodes(raw["place-of-performance"]),
     cpvCodes: scalarStrings(raw["classification-cpv"]).filter((value) => /^\d{8}$/.test(value)),
     estimatedValue:
-      numericValue(raw["estimated-value-procurement"]) ??
+      numericValue(raw["estimated-value-proc"]) ??
       numericValue(raw["estimated-value-lot"]),
-    currency: firstString(raw.currency)?.slice(0, 3).toUpperCase() ?? null,
+    currency:
+      firstString(raw["estimated-value-cur-proc"])?.slice(0, 3).toUpperCase() ??
+      firstString(raw["estimated-value-cur-lot"])?.slice(0, 3).toUpperCase() ??
+      null,
     publishedAt: isoDate(raw["publication-date"]),
-    deadlineAt: isoDate(raw["deadline-receipt-tender"]),
+    deadlineAt:
+      isoDate(raw["deadline-receipt-tender-date-lot"]) ??
+      isoDate(raw.deadline),
     rawPayload: raw,
   };
 }
 
 export async function fetchTedTenders(limit = 100): Promise<TedTender[]> {
+  const now = new Date();
+  const from = new Date(now);
+  from.setUTCFullYear(from.getUTCFullYear() - 1);
+  const formatTedDate = (date: Date) =>
+    `${date.getUTCFullYear()}${String(date.getUTCMonth() + 1).padStart(2, "0")}${String(date.getUTCDate()).padStart(2, "0")}`;
+  const query = [
+    "place-of-performance IN (DEU AUT)",
+    `publication-date = (${formatTedDate(from)} <> ${formatTedDate(now)})`,
+    "(classification-cpv = 72* OR classification-cpv = 73* OR classification-cpv = 79* OR classification-cpv = 80*)",
+  ].join(" AND ");
+
   const response = await fetch(TED_SEARCH_URL, {
     method: "POST",
     headers: {
@@ -107,20 +126,22 @@ export async function fetchTedTenders(limit = 100): Promise<TedTender[]> {
       "user-agent": "TenderLoop/0.1 public-procurement-reuser",
     },
     body: JSON.stringify({
-      query: "place-of-performance IN (DEU AUT)",
+      query,
       fields: [
         "publication-number",
         "notice-title",
         "buyer-name",
         "place-of-performance",
-        "deadline-receipt-tender",
-        "estimated-value-procurement",
+        "deadline",
+        "deadline-receipt-tender-date-lot",
+        "estimated-value-proc",
         "estimated-value-lot",
-        "currency",
+        "estimated-value-cur-proc",
+        "estimated-value-cur-lot",
         "publication-date",
         "classification-cpv",
-        "description-procurement",
-        "form-type",
+        "description-proc",
+        "notice-type",
       ],
       limit: Math.min(Math.max(limit, 1), 250),
       scope: "ACTIVE",
@@ -152,6 +173,8 @@ export async function syncTedTenders(limit = 100) {
     let upserted = 0;
 
     for (const tender of tenders) {
+      const countryCodesJson = JSON.stringify(tender.countryCodes);
+      const cpvCodesJson = JSON.stringify(tender.cpvCodes);
       const rows = await sql`
         insert into tenders (
           source_id, lane, status, source_identifier, source_url, title, summary,
@@ -161,7 +184,9 @@ export async function syncTedTenders(limit = 100) {
         values (
           ${sourceId}, 'public_import', 'published', ${tender.sourceIdentifier},
           ${tender.sourceUrl}, ${tender.title}, ${tender.summary}, ${tender.buyerName},
-          ${tender.countryCodes}, ${tender.cpvCodes}, ${tender.estimatedValue},
+          array(select jsonb_array_elements_text(${countryCodesJson}::jsonb)),
+          array(select jsonb_array_elements_text(${cpvCodesJson}::jsonb)),
+          ${tender.estimatedValue},
           ${tender.currency}, ${tender.publishedAt}, ${tender.deadlineAt}, now(),
           ${JSON.stringify(tender.rawPayload)}::jsonb
         )
