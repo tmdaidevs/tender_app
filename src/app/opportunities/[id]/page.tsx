@@ -14,6 +14,7 @@ import { getTenderById } from "@/lib/tenders";
 import { getLatestTenderEnrichment } from "@/lib/ai/tender-enrichment";
 import { MarketplaceSidebar } from "@/app/components/marketplace-sidebar";
 import { EnrichedTenderBrief } from "@/app/components/enriched-tender-brief";
+import { TenderRequirements } from "@/app/components/tender-requirements";
 
 function formatDate(value: string | null, includeTime = false) {
   if (!value) return "Not supplied by source";
@@ -89,6 +90,7 @@ export default async function OpportunityDetail({
                       : <p>No CPV codes supplied.</p>}
                   </div>
                 </section>
+                <TenderRequirements requirements={tender.requirements} />
               </>
             )}
             sourcePanel={(
@@ -127,6 +129,8 @@ export default async function OpportunityDetail({
               {tender.summary ?? "The official source did not supply a normalized description."}
             </p>
           </section>
+
+          <TenderRequirements requirements={tender.requirements} />
 
           <section className="panel detail-section">
             <div className="section-title"><Tags size={18} /><h2>Classification</h2></div>

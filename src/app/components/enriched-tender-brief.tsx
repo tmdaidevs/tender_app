@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { MessageResponse } from "@/components/ai-elements/message";
 import type { TenderEnrichmentRecord } from "@/domain/tender-enrichment";
+import { TenderRequirements } from "@/app/components/tender-requirements";
 
 function AiText({ children }: { children: string }) {
   return <MessageResponse className="ai-text">{children}</MessageResponse>;
@@ -110,6 +111,8 @@ export function EnrichedTenderBrief({
           />
           <FactList items={brief.eligibilityRequirements} />
         </section>
+
+        <TenderRequirements requirements={brief.requirementCandidates} candidate />
 
         <section className="enrichment-card">
           <SectionHeading

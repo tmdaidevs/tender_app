@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizedTenderRequirementSchema } from "./tender-requirement";
 
 const nullableIsoDate = z.string().datetime().nullable();
 
@@ -26,6 +27,7 @@ export const canonicalTenderSchema = z.object({
       countryCode: z.string(),
     }),
   ),
+  requirements: z.array(normalizedTenderRequirementSchema).max(300).default([]),
   value: z
     .object({
       amount: z.number(),
