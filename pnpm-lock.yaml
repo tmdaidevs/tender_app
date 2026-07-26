@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ai-sdk/openai':
+        specifier: 3.0.0
+        version: 3.0.0(zod@3.25.76)
       '@neondatabase/serverless':
         specifier: 1.0.2
         version: 1.0.2
@@ -80,6 +83,12 @@ packages:
 
   '@ai-sdk/gateway@2.0.0':
     resolution: {integrity: sha1-0pHED6hpF0r1tyML2DjRAoSIpv0=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@ai-sdk/gateway/-/gateway-2.0.0.tgz}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/openai@3.0.0':
+    resolution: {integrity: sha1-uEFKxEOVw1/AjjFqk8ZfAPGoIVw=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@ai-sdk/openai/-/openai-3.0.0.tgz}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1597,7 +1606,7 @@ packages:
     resolution: {integrity: sha1-T5dYHhFPx58kbO43I6XE7dO2JBU=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@rushstack/eslint-patch/-/eslint-patch-1.16.1.tgz}
 
   '@standard-schema/spec@1.1.0':
-    resolution: {integrity: sha1-p5tV26+GBIEvUtFAssmrQbwVC7g=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@standard-schema/spec/-/spec-1.1.0.tgz}
+    resolution: {integrity: sha1-p5tV26+GBIEvUtFAssmrQbwVC7g=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@standard-schema/spec/-/spec-1.1.0.tgz}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha1-ee+rNExYGez4OkPz+fgR/IS1Ftc=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/@swc/helpers/-/helpers-0.5.15.tgz}
@@ -3064,7 +3073,7 @@ packages:
     resolution: {integrity: sha1-afaofZUTq4u4/mO9sJecRI5oRmA=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz}
 
   json-schema@0.4.0:
-    resolution: {integrity: sha1-995M9u+rg4666zI2R0y7paGTCrU=, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json-schema/-/json-schema-0.4.0.tgz}
+    resolution: {integrity: sha1-995M9u+rg4666zI2R0y7paGTCrU=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json-schema/-/json-schema-0.4.0.tgz}
 
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha1-nbe1lJatPzz+8wp1FC0tkwrXJlE=, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/json-stable-stringify-without-jsonify/-/json-stable-stringify-without-jsonify-1.0.1.tgz}
@@ -4120,6 +4129,12 @@ snapshots:
       '@ai-sdk/provider': 2.0.0
       '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
       '@vercel/oidc': 3.0.3
+      zod: 3.25.76
+
+  '@ai-sdk/openai@3.0.0(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.0
+      '@ai-sdk/provider-utils': 4.0.0(zod@3.25.76)
       zod: 3.25.76
 
   '@ai-sdk/provider-utils@3.0.12(zod@3.25.76)':
