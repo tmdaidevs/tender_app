@@ -128,6 +128,11 @@ export default async function OpportunityDetail({
           </section>
         )}
 
+        <div className="official-data-heading">
+          <small>OFFICIAL SOURCE INFORMATION</small>
+          <h2>Original opportunity details</h2>
+        </div>
+
         <div className={`detail-grid ${enrichment ? "canonical-detail-grid" : ""}`}>
           <section className="panel detail-section">
             <div className="section-title"><FileText size={18} /><h2>Opportunity description</h2></div>
@@ -168,11 +173,6 @@ export default async function OpportunityDetail({
           </aside>
         </div>
 
-        <details className="panel source-record">
-          <summary>Original source record ({Object.keys(tender.source.record).length} fields)</summary>
-          <p>This is the complete attributed record received from the source API.</p>
-          <pre>{JSON.stringify(tender.source.record, null, 2)}</pre>
-        </details>
       </section>
     </main>
   );
