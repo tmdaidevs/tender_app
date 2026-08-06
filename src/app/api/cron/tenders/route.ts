@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const synchronization = await syncTedTenders(100);
+  const synchronization = await syncTedTenders(500);
   let enrichment: Awaited<ReturnType<typeof enrichNextTender>> | { error: string };
   try {
     enrichment = await enrichNextTender();

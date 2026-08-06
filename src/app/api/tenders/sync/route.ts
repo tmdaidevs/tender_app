@@ -18,6 +18,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await syncTedTenders(100);
+  const result = await syncTedTenders(500);
   return Response.json({ data: result, source: "TED", officialSource: true });
 }
