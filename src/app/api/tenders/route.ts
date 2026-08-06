@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
     valueAvailability: values.get("valueAvailability") || "all",
     deadlineAvailability: values.get("deadlineAvailability") || "all",
     sort: values.get("sort") || "deadline_asc",
-    limit: Number(values.get("limit") ?? 30),
+    page: Number(values.get("page") ?? 1),
+    limit: Number(values.get("limit") ?? 50),
   });
   if (!parsed.success) {
     return Response.json(
@@ -32,12 +33,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const [tenders, sources] = await Promise.all([
+  const [result, sources] = await Promise.all([
     listTenders(parsed.data),
     listTenderSourceStatuses(),
   ]);
   return Response.json({
-    data: tenders,
-    meta: { count: tenders.length, sources },
+    data: result.items,
+    meta: {
+      count: result.items.length,
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+      totalPages: result.totalPages,
+      sources,
+    },
   });
 }

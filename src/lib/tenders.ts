@@ -2,8 +2,8 @@ import { z } from "zod";
 import {
   canonicalTenderSchema,
   type CanonicalTender,
-} from "@/domain/canonical-tender";
-import { normalizeOfficialTenderConstraints } from "@/domain/tender-requirement";
+} from "../domain/canonical-tender";
+import { normalizeOfficialTenderConstraints } from "../domain/tender-requirement";
 import { getDb } from "./db";
 
 export const tenderListInputSchema = z.object({
@@ -31,7 +31,8 @@ export const tenderListInputSchema = z.object({
       "value_asc",
     ])
     .default("deadline_asc"),
-  limit: z.number().int().min(1).max(100).default(30),
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(50).default(50),
 });
 
 export type TenderListInput = z.infer<typeof tenderListInputSchema>;
@@ -51,6 +52,14 @@ export type TenderListItem = {
   publishedAt: string | null;
   deadlineAt: string | null;
   retrievedAt: string;
+};
+
+export type TenderListResult = {
+  items: TenderListItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 };
 
 export type TenderSourceStatus = {
@@ -97,11 +106,13 @@ export async function listTenders(input: z.input<typeof tenderListInputSchema>) 
   const deadlineTo = filters.deadlineTo ?? "2999-12-31";
   const minValue = filters.minValue ?? 0;
   const maxValue = filters.maxValue ?? 99999999999999;
+  const offset = (filters.page - 1) * filters.limit;
   const rows = await sql`
     select
       t.id, t.title, t.buyer_name, t.source_identifier, t.source_url,
       s.name as source_name, s.base_url as source_base_url, t.country_codes, t.cpv_codes,
-      t.estimated_value, t.currency, t.published_at, t.deadline_at, t.retrieved_at
+      t.estimated_value, t.currency, t.published_at, t.deadline_at, t.retrieved_at,
+      count(*) over() as total_count
     from tenders t
     join tender_sources s on s.id = t.source_id
     where t.lane = 'public_import'
@@ -154,9 +165,10 @@ export async function listTenders(input: z.input<typeof tenderListInputSchema>) 
       case when ${filters.sort} = 'value_asc' then t.estimated_value end asc nulls last,
       t.published_at desc nulls last
     limit ${filters.limit}
+    offset ${offset}
   `;
 
-  return rows.map((row): TenderListItem => ({
+  const items = rows.map((row): TenderListItem => ({
     id: String(row.id),
     title: String(row.title),
     buyerName: row.buyer_name ? String(row.buyer_name) : null,
@@ -172,6 +184,15 @@ export async function listTenders(input: z.input<typeof tenderListInputSchema>) 
     deadlineAt: row.deadline_at ? new Date(String(row.deadline_at)).toISOString() : null,
     retrievedAt: new Date(String(row.retrieved_at)).toISOString(),
   }));
+  const total = rows[0] ? Number(rows[0].total_count) : 0;
+
+  return {
+    items,
+    page: filters.page,
+    pageSize: filters.limit,
+    total,
+    totalPages: total === 0 ? 0 : Math.ceil(total / filters.limit),
+  } satisfies TenderListResult;
 }
 
 function firstSourceString(record: Record<string, unknown>, key: string): string | null {
