@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { getDb } from "@/lib/db";
+import { getDb } from "../lib/db";
 
 const TED_SEARCH_URL = "https://api.ted.europa.eu/v3/notices/search";
 
@@ -111,6 +111,8 @@ function normalizeNotice(raw: Record<string, unknown>): TedTender | null {
 }
 
 export async function fetchTedTenders(limit = 100): Promise<TedTender[]> {
+  const requestedLimit = Math.min(Math.max(limit, 1), 500);
+  const pageSize = Math.min(requestedLimit, 250);
   const now = new Date();
   const from = new Date(now);
   from.setUTCFullYear(from.getUTCFullYear() - 1);
@@ -122,16 +124,21 @@ export async function fetchTedTenders(limit = 100): Promise<TedTender[]> {
     "(classification-cpv = 72* OR classification-cpv = 73* OR classification-cpv = 79* OR classification-cpv = 80*)",
   ].join(" AND ") + " SORT BY publication-date DESC";
 
-  const response = await fetch(TED_SEARCH_URL, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "user-agent": "TenderLoop/0.1 public-procurement-reuser",
-    },
-    body: JSON.stringify({
-      query,
-      fields: [
+  const tenders = new Map<string, TedTender>();
+  let page = 1;
+  let totalNoticeCount: number | undefined;
+
+  while (tenders.size < requestedLimit) {
+    const response = await fetch(TED_SEARCH_URL, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        "user-agent": "TenderLoop/0.1 public-procurement-reuser",
+      },
+      body: JSON.stringify({
+        query,
+        fields: [
         "publication-number",
         "notice-title",
         "buyer-name",
@@ -146,24 +153,37 @@ export async function fetchTedTenders(limit = 100): Promise<TedTender[]> {
         "classification-cpv",
         "description-proc",
         "notice-type",
-      ],
-      limit: Math.min(Math.max(limit, 1), 250),
-      scope: "ACTIVE",
-      checkQuerySyntax: false,
-      paginationMode: "PAGE_NUMBER",
-      page: 1,
-    }),
-    cache: "no-store",
-    signal: AbortSignal.timeout(20_000),
-  });
+        ],
+        limit: pageSize,
+        scope: "ACTIVE",
+        checkQuerySyntax: false,
+        paginationMode: "PAGE_NUMBER",
+        page,
+      }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
+    });
 
-  if (!response.ok) {
-    throw new Error(`TED Search API returned ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`TED Search API returned ${response.status}`);
+    }
+
+    const parsed = tedResponseSchema.parse(await response.json());
+    const notices = parsed.notices ?? parsed.results ?? [];
+    totalNoticeCount = parsed.totalNoticeCount ?? totalNoticeCount;
+    for (const notice of notices) {
+      const tender = normalizeNotice(notice);
+      if (tender) tenders.set(tender.sourceIdentifier, tender);
+      if (tenders.size === requestedLimit) break;
+    }
+
+    const exhaustedPage = notices.length < pageSize;
+    const exhaustedTotal = totalNoticeCount !== undefined && page * pageSize >= totalNoticeCount;
+    if (exhaustedPage || exhaustedTotal) break;
+    page += 1;
   }
 
-  const parsed = tedResponseSchema.parse(await response.json());
-  const notices = parsed.notices ?? parsed.results ?? [];
-  return notices.map(normalizeNotice).filter((item): item is TedTender => item !== null);
+  return [...tenders.values()].slice(0, requestedLimit);
 }
 
 export async function syncTedTenders(limit = 100) {

@@ -1,6 +1,8 @@
 import {
   ArrowUpRight,
   Building2,
+  ChevronLeft,
+  ChevronRight,
   Database,
 } from "lucide-react";
 import Link from "next/link";
@@ -53,6 +55,11 @@ function formatSyncTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function paginationPages(current: number, total: number) {
+  const pages = new Set([1, total, current - 1, current, current + 1]);
+  return [...pages].filter((page) => page >= 1 && page <= total).sort((a, b) => a - b);
+}
+
 export default async function Home({
   searchParams,
 }: {
@@ -81,12 +88,13 @@ export default async function Home({
     valueAvailability: value("valueAvailability") ?? "all",
     deadlineAvailability: value("deadlineAvailability") ?? "all",
     sort: value("sort") ?? "deadline_asc",
+    page: value("page") ? Number(value("page")) : 1,
     limit: 50,
   });
   const filters = parsedFilters.success
     ? parsedFilters.data
     : tenderListInputSchema.parse({ limit: 50 });
-  const [tenders, sources] = await Promise.all([
+  const [result, sources] = await Promise.all([
     listTenders(filters),
     listTenderSourceStatuses(),
   ]);
@@ -95,6 +103,19 @@ export default async function Home({
     .filter((value): value is string => value !== null)
     .sort()
     .at(-1) ?? null;
+  const pageHref = (page: number) => {
+    const next = new URLSearchParams();
+    for (const [name, rawValue] of Object.entries(params)) {
+      if (name === "page" || rawValue === undefined) continue;
+      for (const entry of Array.isArray(rawValue) ? rawValue : [rawValue]) next.append(name, entry);
+    }
+    if (page > 1) next.set("page", String(page));
+    const query = next.toString();
+    return query ? `/marketplace?${query}` : "/marketplace";
+  };
+  const visiblePages = paginationPages(result.page, result.totalPages);
+  const firstResult = result.total === 0 ? 0 : (result.page - 1) * result.pageSize + 1;
+  const lastResult = Math.min(result.page * result.pageSize, result.total);
 
   return (
     <main className="shell">
@@ -129,7 +150,7 @@ export default async function Home({
             <span>Official link</span>
           </div>
           <div className="live-list">
-            {tenders.map((tender) => (
+            {result.items.map((tender) => (
               <article className="live-tender" key={tender.id}>
                 <span className="source-mark"><Building2 size={18} /></span>
                 <Link className="live-main" href={`/opportunities/${tender.id}`}>
@@ -157,7 +178,7 @@ export default async function Home({
                 <a className="save" href={tender.sourceUrl} target="_blank" rel="noreferrer">Official portal <ArrowUpRight size={13} /></a>
               </article>
             ))}
-            {tenders.length === 0 && (
+            {result.items.length === 0 && (
               <div className="empty-state">
                 <Database size={28} />
                 <h3>No imported opportunities yet</h3>
@@ -165,6 +186,29 @@ export default async function Home({
               </div>
             )}
           </div>
+          {result.totalPages > 0 && (
+            <nav className="marketplace-pagination" aria-label="Opportunity pages">
+              <p>Showing {firstResult}–{lastResult} of {result.total} opportunities</p>
+              <div>
+                {result.page > 1 ? (
+                  <Link className="page-direction" href={pageHref(result.page - 1)}><ChevronLeft size={14} /> Previous</Link>
+                ) : (
+                  <span className="page-direction disabled"><ChevronLeft size={14} /> Previous</span>
+                )}
+                {visiblePages.map((page, index) => (
+                  <span className="page-number-wrap" key={page}>
+                    {index > 0 && page - visiblePages[index - 1] > 1 && <i>…</i>}
+                    <Link aria-current={page === result.page ? "page" : undefined} className="page-number" href={pageHref(page)}>{page}</Link>
+                  </span>
+                ))}
+                {result.page < result.totalPages ? (
+                  <Link className="page-direction" href={pageHref(result.page + 1)}>Next <ChevronRight size={14} /></Link>
+                ) : (
+                  <span className="page-direction disabled">Next <ChevronRight size={14} /></span>
+                )}
+              </div>
+            </nav>
+          )}
         </section>
         <footer><span>Live Neon PostgreSQL</span><span>Imported notices remain attributable to their official source.</span></footer>
       </section>
